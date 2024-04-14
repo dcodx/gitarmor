@@ -1,0 +1,54 @@
+name: Run GitArmor Action - On-demand
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Repository name'
+        required: true
+        default: 'gitarmor-central'
+      org:
+        description: 'Organization name'
+        required: true
+        default: 'dearmory'
+      level:
+        description: 'Level'
+        required: true
+        default: 'repository'
+
+jobs:
+  run-gitarmor:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ secrets.GITARMOR_APP_ID }}
+        private-key: ${{ secrets.GITARMOR_APP_KEY }}
+        owner: ${{ github.repository_owner }}
+
+    - name: Checkout policies
+      uses: actions/checkout@v4
+
+    - name: Run GitArmor Action
+      uses: dcodx/gitarmor@main
+      id: gitarmor
+      #env:
+      #   DEBUG: true
+      with:
+          repo: ${{ github.event.inputs.repo }}
+          org: ${{ github.event.inputs.org }}
+          token: ${{ steps.app-token.outputs.token }}
+          level: ${{ github.event.inputs.level }}
+          policy-dir: './policies'
+
+    - name: Print report to Job summary
+      run: |
+        cat output-report.md >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload the reports as Actions artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: gitarmor-evaluation-report
+        path: output-report.*

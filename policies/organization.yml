@@ -1,0 +1,44 @@
+custom_roles:
+  - name: "Security Team"
+    base_role: "read" # read, triage, write, maintain
+    permissions:
+      - "delete_alerts_code_scanning"
+
+# Priviliges 
+member_privileges:
+  base_permission: "read" # no-permission, read, write, admin
+  repository_creation: # all, internal, private, public
+    - "internal"
+    - "private" 
+  repository_forking: true 
+  pages_creation: # public, private
+    - "public"
+  # outside_collaborators: true
+  # repository_comments: true
+  # repository_discussions: true
+  # project_base_permission: "read" # no-access, read, write, admin
+  # admin_visilibilty_change: true
+  # admin_deletion_transfer: true
+  # admin_issue_deletion: true
+  # members_team_creation: true
+  # dependency_graph_access: true
+
+
+# Authentication
+authentication:
+  mfa_required: true
+
+# Advanced Security
+advanced_security:
+  automatic_dependency_graph: true
+  automatic_dependabot_alerts: true
+  automatic_dependabot_security_updates: true
+  automatic_ghas_enablement: true
+  automatic_secret_scanning: true
+  automatic_push_protection: true
+  automatic_secret_scanning_validity_check: true
+  # automatic_codeql_extended: true
+  # automatic_codeql_autofix: true
+  security_manager_teams:
+    - "security_team" # slug
+

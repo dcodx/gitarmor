@@ -1,0 +1,13 @@
+{
+  "include": ["./src/*.ts"],
+  "exclude": ["dist", "node_modules"],
+  "compilerOptions": {
+    "typeRoots": ["./types", "node_modules/@types"],
+    "moduleResolution": "node",
+    "module": "CommonJS",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "target": "ES2022",
+    "esModuleInterop": true
+  }
+}

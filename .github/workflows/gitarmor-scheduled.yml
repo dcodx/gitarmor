@@ -1,0 +1,35 @@
+name: Run GitArmor Action - Scheduled
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  run-gitarmor:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ secrets.GITARMOR_APP_ID }}
+        private-key: ${{ secrets.GITARMOR_APP_KEY }}
+        owner: ${{ github.repository_owner }}
+
+    - name: Checkout policies
+      uses: actions/checkout@v4
+
+    - name: Run GitArmor Action
+      uses: dcodx/gitarmor@main
+      id: gitarmor
+      #env:
+      #   DEBUG: true
+      with:
+          repo: ${{ github.repository }}
+          org: ${{ github.repository_owner }}
+          token: ${{ steps.app-token.outputs.token }}
+          level: 'organization'
+          policy-dir: './policies'
+
+    - name: Get the output
+      run: echo "Check results - ${{ steps.gitarmor.outputs.check-results }}"
