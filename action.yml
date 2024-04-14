@@ -1,5 +1,8 @@
 name: 'GitArmor Action'
 description: 'GitHub Action that runs GitArmor against your GitHub repo and org to check against security policy that you have defined.'
+branding:
+  color: blue
+  icon: unlock
 inputs:
   repo:
     description: 'Repository name'
