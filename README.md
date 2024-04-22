@@ -29,8 +29,13 @@ Ready to get started with GitArmor? First, you'll need to either clone the repos
 #### Get the Code
 
 Simply clone the repository:
+
 ```bash
-gh repo clone gitarmor/gitarmor
+gh repo clone dcodx/gitarmor
+```
+or
+```bash
+git clone https://github.com/dcodx/gitarmor.git
 ```
 
 #### Install Dependencies
