@@ -8,13 +8,17 @@ export const getRepositoriesForOrg = async (
   org: string,
 ): Promise<Endpoints["GET /orgs/{org}/repos"]["response"]["data"]> => {
   const octokit = new GitArmorKit();
-
+  try{
   const repos: Endpoints["GET /orgs/{org}/repos"]["response"]["data"] =
     await octokit.paginate(`GET /orgs/${org}/repos`, {
       per_page: 100,
     });
 
   return repos;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 // Get general information for an organization
@@ -22,13 +26,17 @@ export const getOrganization = async (
   org: string,
 ): Promise<Endpoints["GET /orgs/{org}"]["response"]["data"]> => {
   const octokit = new GitArmorKit();
-
+  try {
   const response: Endpoints["GET /orgs/{org}"]["response"] =
     await octokit.rest.orgs.get({
       org: org,
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 // Get custom roles information for an organization
@@ -40,13 +48,17 @@ export const getSecurityTeamsForOrg = async (
   Endpoints["GET /orgs/{org}/security-managers"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
-
+  try {
   const teams: Endpoints["GET /orgs/{org}/security-managers"]["response"]["data"] =
     await octokit.paginate(`GET /orgs/${org}/teams`, {
       per_page: 100,
     });
 
   return teams;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 // Get custom repository roles information for an organization

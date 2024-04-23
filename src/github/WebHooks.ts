@@ -22,7 +22,8 @@ export const getWebHooks = async (
     );
     res = iterator as WebHook[];
   } catch (error) {
-    logger.error(`There was an error. Please check the logs ${error}`);
+    logger.error(error.message);
+    throw error;
   }
   return res;
 };

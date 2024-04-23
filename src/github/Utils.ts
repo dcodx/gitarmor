@@ -11,6 +11,7 @@ export const getRepoFile = async (
   Endpoints["GET /repos/{owner}/{repo}/contents/{path}"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/contents/{path}"]["response"] =
     await octokit.rest.repos.getContent({
       owner: owner,
@@ -19,4 +20,8 @@ export const getRepoFile = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };

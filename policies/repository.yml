@@ -84,4 +84,4 @@ webhooks:
   allow_insecure_ssl: false
   allowed_events:
     - pull
-  mandatory_secret: false
+  mandatory_secret: true

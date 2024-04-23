@@ -6,29 +6,47 @@ const Logger_1 = require("../utils/Logger");
 // Get all repositories for an organization
 const getRepositoriesForOrg = async (org) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const repos = await octokit.paginate(`GET /orgs/${org}/repos`, {
-        per_page: 100,
-    });
-    return repos;
+    try {
+        const repos = await octokit.paginate(`GET /orgs/${org}/repos`, {
+            per_page: 100,
+        });
+        return repos;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepositoriesForOrg = getRepositoriesForOrg;
 // Get general information for an organization
 const getOrganization = async (org) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.orgs.get({
-        org: org,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.orgs.get({
+            org: org,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getOrganization = getOrganization;
 // Get custom roles information for an organization
 // Get seurity managers information for an organization
 const getSecurityTeamsForOrg = async (org) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const teams = await octokit.paginate(`GET /orgs/${org}/teams`, {
-        per_page: 100,
-    });
-    return teams;
+    try {
+        const teams = await octokit.paginate(`GET /orgs/${org}/teams`, {
+            per_page: 100,
+        });
+        return teams;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getSecurityTeamsForOrg = getSecurityTeamsForOrg;
 // Get custom repository roles information for an organization

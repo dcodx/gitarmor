@@ -12,7 +12,6 @@ class WebHooksChecks {
     // check whether the repository has self hosted runners enabled
     async checkWebHooks() {
         const webhooks = await (0, WebHooks_1.getWebHooks)(this.repository.owner, this.repository.name);
-        console.log(webhooks);
         // for each webhook in webhooks extract the domain and check if it is in the allowed list in the policy, if not return false
         const allowedDomains = this.policy.webhooks.allowed_domains;
         const notAllowedDomains = [];

@@ -7,7 +7,7 @@ export const getRepositoriesForTeamAsAdmin = async (
   teamSlug: string,
 ): Promise<Endpoints["GET /teams/{team_id}/repos"]["response"]["data"]> => {
   const octokit = new GitArmorKit();
-
+  try{
   //get team id from slug
   const team: Endpoints["GET /orgs/{org}/teams/{team_slug}"]["response"] =
     await octokit.rest.teams.getByName({
@@ -15,12 +15,17 @@ export const getRepositoriesForTeamAsAdmin = async (
       team_slug: teamSlug,
     });
 
+
   const repos: Endpoints["GET /teams/{team_id}/repos"]["response"]["data"] =
     await octokit.paginate(`GET /teams/${team.data.id}/repos`, {
       per_page: 100,
     });
 
   return repos.filter((repo) => repo.permissions?.admin);
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 export const getRepository = async (
@@ -28,7 +33,7 @@ export const getRepository = async (
   repo: string,
 ): Promise<Endpoints["GET /repos/{owner}/{repo}"]["response"]["data"]> => {
   const octokit = new GitArmorKit();
-
+  try{
   const response: Endpoints["GET /repos/{owner}/{repo}"]["response"] =
     await octokit.rest.repos.get({
       owner: owner,
@@ -36,6 +41,10 @@ export const getRepository = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 export const getRepoPullRequests = async (
@@ -45,6 +54,7 @@ export const getRepoPullRequests = async (
   Endpoints["GET /repos/{owner}/{repo}/pulls"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/pulls"]["response"] =
     await octokit.rest.pulls.list({
       owner: owner,
@@ -52,6 +62,11 @@ export const getRepoPullRequests = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
+
 };
 
 export const getRepoCollaborators = async (
@@ -61,6 +76,7 @@ export const getRepoCollaborators = async (
   Endpoints["GET /repos/{owner}/{repo}/collaborators"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/collaborators"]["response"] =
     await octokit.rest.repos.listCollaborators({
       owner: owner,
@@ -68,6 +84,10 @@ export const getRepoCollaborators = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 // get  information for a specific branch in a repo
@@ -79,6 +99,7 @@ export const getRepoBranch = async (
   Endpoints["GET /repos/{owner}/{repo}/branches/{branch}"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/branches/{branch}"]["response"] =
     await octokit.rest.repos.getBranch({
       owner: owner,
@@ -87,6 +108,10 @@ export const getRepoBranch = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 // get all the branches for a repo and return only the protected branches
@@ -97,6 +122,7 @@ export const getRepoProtectedBranches = async (
   Endpoints["GET /repos/{owner}/{repo}/branches"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/branches"]["response"] =
     await octokit.rest.repos.listBranches({
       owner: owner,
@@ -105,6 +131,11 @@ export const getRepoProtectedBranches = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
+
 };
 
 // check if a protected branch requires a pull request before merging
@@ -116,6 +147,7 @@ export const getRepoBranchProtection = async (
   Endpoints["GET /repos/{owner}/{repo}/branches/{branch}/protection"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/branches/{branch}/protection"]["response"] =
     await octokit.rest.repos.getBranchProtection({
       owner: owner,
@@ -124,6 +156,11 @@ export const getRepoBranchProtection = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
+
 };
 
 //verify the presence of a file in the repository
@@ -135,6 +172,7 @@ export const getRepoFile = async (
   Endpoints["GET /repos/{owner}/{repo}/contents/{path}"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/contents/{path}"]["response"] =
     await octokit.rest.repos.getContent({
       owner: owner,
@@ -143,6 +181,10 @@ export const getRepoFile = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 // get dependabot alerts status for a repo
@@ -152,6 +194,7 @@ export const getRepoDependabotAlerts = async (
 ): Promise<Boolean> => {
   try {
     const octokit = new GitArmorKit();
+    
     const response: Endpoints["GET /repos/{owner}/{repo}/vulnerability-alerts"]["response"] =
       await octokit.rest.repos.checkVulnerabilityAlerts({
         owner: owner,
@@ -162,6 +205,7 @@ export const getRepoDependabotAlerts = async (
     if (error.status === 404) {
       return false;
     } else {
+      logger.error(error.message);
       throw error;
     }
   }
@@ -184,6 +228,7 @@ export const getRepoDependabotSecurityUpdates = async (
     if (error.status === 404) {
       return false;
     } else {
+      logger.error(error.message);
       throw error;
     }
   }
@@ -219,6 +264,7 @@ export const getRepositoryCodeScanningAnalysis = async (
     ) {
       return [];
     } else {
+      logger.error(error.message);
       throw error;
     }
   }

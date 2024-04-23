@@ -17,7 +17,8 @@ const getWebHooks = async (owner, repository) => {
         res = iterator;
     }
     catch (error) {
-        Logger_1.logger.error(`There was an error. Please check the logs ${error}`);
+        Logger_1.logger.error(error.message);
+        throw error;
     }
     return res;
 };

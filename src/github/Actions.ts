@@ -35,17 +35,21 @@ export const getRepoSelectedActions = async (
   Endpoints["GET /repos/{owner}/{repo}/actions/permissions/selected-actions"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
+  try {
+    const response: Endpoints["GET /repos/{owner}/{repo}/actions/permissions/selected-actions"]["response"] =
+      await octokit.request(
+        "GET /repos/{owner}/{repo}/actions/permissions/selected-actions",
+        {
+          owner: owner,
+          repo: repo,
+        },
+      );
 
-  const response: Endpoints["GET /repos/{owner}/{repo}/actions/permissions/selected-actions"]["response"] =
-    await octokit.request(
-      "GET /repos/{owner}/{repo}/actions/permissions/selected-actions",
-      {
-        owner: owner,
-        repo: repo,
-      },
-    );
-
-  return response.data;
+    return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 // Get default workflow permissions for a repository
@@ -57,7 +61,7 @@ export const getRepoDefaultWorkflowsPermissions = async (
   Endpoints["GET /repos/{owner}/{repo}/actions/permissions/workflow"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
-
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/actions/permissions/workflow"]["response"] =
     await octokit.rest.actions.getGithubActionsDefaultWorkflowPermissionsRepository(
       {
@@ -67,6 +71,10 @@ export const getRepoDefaultWorkflowsPermissions = async (
     );
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 // Get the level of access for workflows outside of the repository using GET /repos/{owner}/{repo}/actions/permissions/access
@@ -78,7 +86,7 @@ export const getRepoWorkflowAccessPermissions = async (
   Endpoints["GET /repos/{owner}/{repo}/actions/permissions/access"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
-
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/actions/permissions/access"]["response"] =
     await octokit.request(
       "GET /repos/{owner}/{repo}/actions/permissions/access",
@@ -89,6 +97,10 @@ export const getRepoWorkflowAccessPermissions = async (
     );
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 //Get all the actions used in the workflows declared in a repository and retursn the list of actions.
@@ -100,7 +112,7 @@ export const getRepoWorkflows = async (
   Endpoints["GET /repos/{owner}/{repo}/actions/workflows"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
-
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/actions/workflows"]["response"] =
     await octokit.rest.actions.listRepoWorkflows({
       owner: owner,
@@ -108,6 +120,10 @@ export const getRepoWorkflows = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
 
 //using getRepoFile get the content of a workflow file and parse it to get the list of actions used in the workflow
@@ -119,6 +135,7 @@ export const getRepoWorkflowActions = async (
   path: string,
 ): Promise<string[]> => {
   const octokit = new GitArmorKit();
+  try {
   const response: Endpoints["GET /repos/{owner}/{repo}/contents/{path}"]["response"] =
     await octokit.rest.repos.getContent({
       owner: owner,
@@ -135,4 +152,8 @@ export const getRepoWorkflowActions = async (
   } else {
     throw new Error("The specified path does not point to a file.");
   }
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };

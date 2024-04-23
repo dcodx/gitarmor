@@ -5,86 +5,134 @@ const GitArmorKit_1 = require("./GitArmorKit");
 const Logger_1 = require("../utils/Logger");
 const getRepositoriesForTeamAsAdmin = async (org, teamSlug) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    //get team id from slug
-    const team = await octokit.rest.teams.getByName({
-        org: org,
-        team_slug: teamSlug,
-    });
-    const repos = await octokit.paginate(`GET /teams/${team.data.id}/repos`, {
-        per_page: 100,
-    });
-    return repos.filter((repo) => repo.permissions?.admin);
+    try {
+        //get team id from slug
+        const team = await octokit.rest.teams.getByName({
+            org: org,
+            team_slug: teamSlug,
+        });
+        const repos = await octokit.paginate(`GET /teams/${team.data.id}/repos`, {
+            per_page: 100,
+        });
+        return repos.filter((repo) => repo.permissions?.admin);
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepositoriesForTeamAsAdmin = getRepositoriesForTeamAsAdmin;
 const getRepository = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.get({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.get({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepository = getRepository;
 const getRepoPullRequests = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.pulls.list({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.pulls.list({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoPullRequests = getRepoPullRequests;
 const getRepoCollaborators = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.listCollaborators({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.listCollaborators({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoCollaborators = getRepoCollaborators;
 // get  information for a specific branch in a repo
 const getRepoBranch = async (owner, repo, branch) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.getBranch({
-        owner: owner,
-        repo: repo,
-        branch: branch,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.getBranch({
+            owner: owner,
+            repo: repo,
+            branch: branch,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoBranch = getRepoBranch;
 // get all the branches for a repo and return only the protected branches
 const getRepoProtectedBranches = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.listBranches({
-        owner: owner,
-        repo: repo,
-        protected: true,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.listBranches({
+            owner: owner,
+            repo: repo,
+            protected: true,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoProtectedBranches = getRepoProtectedBranches;
 // check if a protected branch requires a pull request before merging
 const getRepoBranchProtection = async (owner, repo, branch) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.getBranchProtection({
-        owner: owner,
-        repo: repo,
-        branch: branch,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.getBranchProtection({
+            owner: owner,
+            repo: repo,
+            branch: branch,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoBranchProtection = getRepoBranchProtection;
 //verify the presence of a file in the repository
 const getRepoFile = async (owner, repo, path) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.getContent({
-        owner: owner,
-        repo: repo,
-        path: path,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.getContent({
+            owner: owner,
+            repo: repo,
+            path: path,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoFile = getRepoFile;
 // get dependabot alerts status for a repo
@@ -102,6 +150,7 @@ const getRepoDependabotAlerts = async (owner, repo) => {
             return false;
         }
         else {
+            Logger_1.logger.error(error.message);
             throw error;
         }
     }
@@ -122,6 +171,7 @@ const getRepoDependabotSecurityUpdates = async (owner, repo) => {
             return false;
         }
         else {
+            Logger_1.logger.error(error.message);
             throw error;
         }
     }
@@ -146,6 +196,7 @@ const getRepositoryCodeScanningAnalysis = async (owner, repo) => {
             return [];
         }
         else {
+            Logger_1.logger.error(error.message);
             throw error;
         }
     }

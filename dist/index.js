@@ -48856,7 +48856,6 @@ class WebHooksChecks {
     // check whether the repository has self hosted runners enabled
     async checkWebHooks() {
         const webhooks = await (0, WebHooks_1.getWebHooks)(this.repository.owner, this.repository.name);
-        console.log(webhooks);
         // for each webhook in webhooks extract the domain and check if it is in the allowed list in the policy, if not return false
         const allowedDomains = this.policy.webhooks.allowed_domains;
         const notAllowedDomains = [];
@@ -49051,59 +49050,89 @@ exports.getRepoActionsPermissions = getRepoActionsPermissions;
 // Get allowed actions and reusable workflows for a repository
 const getRepoSelectedActions = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.request("GET /repos/{owner}/{repo}/actions/permissions/selected-actions", {
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.request("GET /repos/{owner}/{repo}/actions/permissions/selected-actions", {
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoSelectedActions = getRepoSelectedActions;
 // Get default workflow permissions for a repository
 const getRepoDefaultWorkflowsPermissions = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.actions.getGithubActionsDefaultWorkflowPermissionsRepository({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.actions.getGithubActionsDefaultWorkflowPermissionsRepository({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoDefaultWorkflowsPermissions = getRepoDefaultWorkflowsPermissions;
 // Get the level of access for workflows outside of the repository using GET /repos/{owner}/{repo}/actions/permissions/access
 const getRepoWorkflowAccessPermissions = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.request("GET /repos/{owner}/{repo}/actions/permissions/access", {
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.request("GET /repos/{owner}/{repo}/actions/permissions/access", {
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoWorkflowAccessPermissions = getRepoWorkflowAccessPermissions;
 //Get all the actions used in the workflows declared in a repository and retursn the list of actions.
 const getRepoWorkflows = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.actions.listRepoWorkflows({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.actions.listRepoWorkflows({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoWorkflows = getRepoWorkflows;
 //using getRepoFile get the content of a workflow file and parse it to get the list of actions used in the workflow
 //and return the list of actions used in the workflow
 const getRepoWorkflowActions = async (owner, repo, path) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.getContent({
-        owner: owner,
-        repo: repo,
-        path: path,
-    });
-    if ("content" in response.data) {
-        const content = Buffer.from(response.data.content, "base64").toString("ascii");
-        const actions = content.match(/uses: (.*)/g);
-        return actions;
+    try {
+        const response = await octokit.rest.repos.getContent({
+            owner: owner,
+            repo: repo,
+            path: path,
+        });
+        if ("content" in response.data) {
+            const content = Buffer.from(response.data.content, "base64").toString("ascii");
+            const actions = content.match(/uses: (.*)/g);
+            return actions;
+        }
+        else {
+            throw new Error("The specified path does not point to a file.");
+        }
     }
-    else {
-        throw new Error("The specified path does not point to a file.");
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
     }
 };
 exports.getRepoWorkflowActions = getRepoWorkflowActions;
@@ -49187,29 +49216,47 @@ const Logger_1 = __nccwpck_require__(7674);
 // Get all repositories for an organization
 const getRepositoriesForOrg = async (org) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const repos = await octokit.paginate(`GET /orgs/${org}/repos`, {
-        per_page: 100,
-    });
-    return repos;
+    try {
+        const repos = await octokit.paginate(`GET /orgs/${org}/repos`, {
+            per_page: 100,
+        });
+        return repos;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepositoriesForOrg = getRepositoriesForOrg;
 // Get general information for an organization
 const getOrganization = async (org) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.orgs.get({
-        org: org,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.orgs.get({
+            org: org,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getOrganization = getOrganization;
 // Get custom roles information for an organization
 // Get seurity managers information for an organization
 const getSecurityTeamsForOrg = async (org) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const teams = await octokit.paginate(`GET /orgs/${org}/teams`, {
-        per_page: 100,
-    });
-    return teams;
+    try {
+        const teams = await octokit.paginate(`GET /orgs/${org}/teams`, {
+            per_page: 100,
+        });
+        return teams;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getSecurityTeamsForOrg = getSecurityTeamsForOrg;
 // Get custom repository roles information for an organization
@@ -49243,86 +49290,134 @@ const GitArmorKit_1 = __nccwpck_require__(2009);
 const Logger_1 = __nccwpck_require__(7674);
 const getRepositoriesForTeamAsAdmin = async (org, teamSlug) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    //get team id from slug
-    const team = await octokit.rest.teams.getByName({
-        org: org,
-        team_slug: teamSlug,
-    });
-    const repos = await octokit.paginate(`GET /teams/${team.data.id}/repos`, {
-        per_page: 100,
-    });
-    return repos.filter((repo) => repo.permissions?.admin);
+    try {
+        //get team id from slug
+        const team = await octokit.rest.teams.getByName({
+            org: org,
+            team_slug: teamSlug,
+        });
+        const repos = await octokit.paginate(`GET /teams/${team.data.id}/repos`, {
+            per_page: 100,
+        });
+        return repos.filter((repo) => repo.permissions?.admin);
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepositoriesForTeamAsAdmin = getRepositoriesForTeamAsAdmin;
 const getRepository = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.get({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.get({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepository = getRepository;
 const getRepoPullRequests = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.pulls.list({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.pulls.list({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoPullRequests = getRepoPullRequests;
 const getRepoCollaborators = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.listCollaborators({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.listCollaborators({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoCollaborators = getRepoCollaborators;
 // get  information for a specific branch in a repo
 const getRepoBranch = async (owner, repo, branch) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.getBranch({
-        owner: owner,
-        repo: repo,
-        branch: branch,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.getBranch({
+            owner: owner,
+            repo: repo,
+            branch: branch,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoBranch = getRepoBranch;
 // get all the branches for a repo and return only the protected branches
 const getRepoProtectedBranches = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.listBranches({
-        owner: owner,
-        repo: repo,
-        protected: true,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.listBranches({
+            owner: owner,
+            repo: repo,
+            protected: true,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoProtectedBranches = getRepoProtectedBranches;
 // check if a protected branch requires a pull request before merging
 const getRepoBranchProtection = async (owner, repo, branch) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.getBranchProtection({
-        owner: owner,
-        repo: repo,
-        branch: branch,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.getBranchProtection({
+            owner: owner,
+            repo: repo,
+            branch: branch,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoBranchProtection = getRepoBranchProtection;
 //verify the presence of a file in the repository
 const getRepoFile = async (owner, repo, path) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.repos.getContent({
-        owner: owner,
-        repo: repo,
-        path: path,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.repos.getContent({
+            owner: owner,
+            repo: repo,
+            path: path,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoFile = getRepoFile;
 // get dependabot alerts status for a repo
@@ -49340,6 +49435,7 @@ const getRepoDependabotAlerts = async (owner, repo) => {
             return false;
         }
         else {
+            Logger_1.logger.error(error.message);
             throw error;
         }
     }
@@ -49360,6 +49456,7 @@ const getRepoDependabotSecurityUpdates = async (owner, repo) => {
             return false;
         }
         else {
+            Logger_1.logger.error(error.message);
             throw error;
         }
     }
@@ -49384,6 +49481,7 @@ const getRepositoryCodeScanningAnalysis = async (owner, repo) => {
             return [];
         }
         else {
+            Logger_1.logger.error(error.message);
             throw error;
         }
     }
@@ -49401,14 +49499,21 @@ exports.getRepositoryCodeScanningAnalysis = getRepositoryCodeScanningAnalysis;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRepoRunners = void 0;
 const GitArmorKit_1 = __nccwpck_require__(2009);
+const Logger_1 = __nccwpck_require__(7674);
 //List self-hosted runners for a repository
 const getRepoRunners = async (owner, repo) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
-    const response = await octokit.rest.actions.listSelfHostedRunnersForRepo({
-        owner: owner,
-        repo: repo,
-    });
-    return response.data;
+    try {
+        const response = await octokit.rest.actions.listSelfHostedRunnersForRepo({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        Logger_1.logger.error(error.message);
+        throw error;
+    }
 };
 exports.getRepoRunners = getRepoRunners;
 
@@ -49438,7 +49543,8 @@ const getWebHooks = async (owner, repository) => {
         res = iterator;
     }
     catch (error) {
-        Logger_1.logger.error(`There was an error. Please check the logs ${error}`);
+        Logger_1.logger.error(error.message);
+        throw error;
     }
     return res;
 };

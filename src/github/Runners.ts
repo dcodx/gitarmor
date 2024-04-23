@@ -10,7 +10,7 @@ export const getRepoRunners = async (
   Endpoints["GET /repos/{owner}/{repo}/actions/runners"]["response"]["data"]
 > => {
   const octokit = new GitArmorKit();
-
+  try{
   const response: Endpoints["GET /repos/{owner}/{repo}/actions/runners"]["response"] =
     await octokit.rest.actions.listSelfHostedRunnersForRepo({
       owner: owner,
@@ -18,4 +18,8 @@ export const getRepoRunners = async (
     });
 
   return response.data;
+} catch (error) {
+  logger.error(error.message);
+  throw error;
+}
 };
