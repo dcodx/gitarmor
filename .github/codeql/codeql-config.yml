@@ -1,0 +1,9 @@
+name: "CodeQL config"
+
+disable-default-queries: true
+queries:
+    - uses: security-and-quality
+paths: 
+  - 'src'
+paths-ignore: 
+  - '**/*.test.ts'
