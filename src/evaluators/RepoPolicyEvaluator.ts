@@ -64,7 +64,7 @@ export class RepoPolicyEvaluator {
     }
 
     // Check the files exist policy rule
-    if (this.policy.file_exists.length > 0) {
+    if (this.policy.file_exists && this.policy.file_exists.length > 0) {
       const files_exist = await new FilesExistChecks(
         this.repository,
         this.policy,
