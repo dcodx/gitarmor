@@ -28,14 +28,15 @@ export const getRepository = async (
   repo: string,
 ): Promise<Endpoints["GET /repos/{owner}/{repo}"]["response"]["data"]> => {
   const octokit = new GitArmorKit();
-
+  
   const response: Endpoints["GET /repos/{owner}/{repo}"]["response"] =
     await octokit.rest.repos.get({
       owner: owner,
       repo: repo,
     });
-
+    
   return response.data;
+
 };
 
 export const getRepoPullRequests = async (
