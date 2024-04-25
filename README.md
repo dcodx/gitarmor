@@ -38,6 +38,11 @@ or
 git clone https://github.com/dcodx/gitarmor.git
 ```
 
+#### Requirements 
+
+- Node v18 or higher
+- npm or yarn
+
 #### Install Dependencies
 
 Install the necessary dependencies using `npm` or `yarn`:
