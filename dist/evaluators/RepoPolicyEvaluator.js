@@ -40,7 +40,7 @@ class RepoPolicyEvaluator {
             this.repositoryCheckResults.push(branch_protection_pull_request_results);
         }
         // Check the files exist policy rule
-        if (this.policy.file_exists.length > 0) {
+        if (this.policy.file_exists && this.policy.file_exists.length > 0) {
             const files_exist = await new FilesExistChecks_1.FilesExistChecks(this.repository, this.policy).checkFilesExist();
             Logger_1.logger.debug(`Files exists results: ${JSON.stringify(files_exist)}`);
             this.repositoryCheckResults.push(files_exist);

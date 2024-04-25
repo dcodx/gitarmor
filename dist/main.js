@@ -90,7 +90,8 @@ const run = async () => {
             core.setFailed(error);
         }
         else {
-            Logger_1.logger.error(error);
+            console.log(error.status);
+            Logger_1.logger.error(error.message);
         }
     }
 };

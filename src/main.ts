@@ -64,7 +64,7 @@ const run = async (): Promise<void> => {
         repository,
         policies.repo as RepoPolicy,
       );
-
+      
       await policyEvaluator.evaluatePolicy();
       policyEvaluator.printCheckResults();
       report.addOneRepoEvaluator(policyEvaluator);
@@ -86,7 +86,7 @@ const run = async (): Promise<void> => {
     if (process.env.GITHUB_ACTIONS) {
       core.setFailed(error);
     } else {
-      logger.error(error);
+      logger.error(error.message);
     }
   }
 };
