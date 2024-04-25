@@ -49564,7 +49564,6 @@ const run = async () => {
             core.setFailed(error);
         }
         else {
-            console.log(error.status);
             Logger_1.logger.error(error.message);
         }
     }
