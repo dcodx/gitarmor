@@ -4,7 +4,6 @@ import { OrgGHASChecks } from "./organization/OrgGHASChecks";
 import { OrgAuthenticationChecks } from "./organization/OrgAuthenticationChecks";
 import { OrgCustomRolesChecks } from "./organization/OrgCustomRolesChecks";
 import { getOrganization } from "../github/Organization";
-import { FilesExistChecks } from "./multipurpose/FilesExistChecks";
 import { PrivilegesChecks } from "./organization/PrivilegesChecks";
 
 export class OrgPolicyEvaluator {

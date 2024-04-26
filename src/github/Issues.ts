@@ -1,4 +1,3 @@
-import { Issue } from "../types/common/main";
 import { GitArmorKit } from "./GitArmorKit";
 
 // export class to Issues class

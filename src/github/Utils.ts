@@ -1,6 +1,5 @@
 import { Endpoints } from "@octokit/types";
 import { GitArmorKit } from "./GitArmorKit";
-import { logger } from "../utils/Logger";
 
 //Given a certain path in a repository, get the contents of the file
 export const getRepoFile = async (
