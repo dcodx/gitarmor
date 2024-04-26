@@ -1,6 +1,8 @@
 # GitArmor
 
-<img src="./imgs/gitarmor-text-blue.png" alt="gitarmor logo"/>
+<div style="background-color: white; padding: 10px;">
+    <img src="./imgs/gitarmor-text-blue.png" alt="gitarmor logo"/>
+</div>
 
 GitArmor is a handy tool that makes it easy to assess the secure setup of your developer platform. 
 
