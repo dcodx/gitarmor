@@ -10,6 +10,14 @@ import * as core from "@actions/core";
 import { summary } from "@actions/core/lib/summary";
 
 const run = async (): Promise<void> => {
+
+  console.log(`
+
+             GitArmor                                                                                       
+     by dcodx.com - version 1.0
+              
+    `);
+
   try {
     const startTime = process.hrtime();
     const inputs = parseInputs();

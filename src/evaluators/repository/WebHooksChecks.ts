@@ -18,7 +18,7 @@ export class WebHooksChecks {
       this.repository.name,
     );
 
-    console.log(webhooks);
+    
     // for each webhook in webhooks extract the domain and check if it is in the allowed list in the policy, if not return false
 
     const allowedDomains = this.policy.webhooks.allowed_domains;
