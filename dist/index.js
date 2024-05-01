@@ -49519,7 +49519,6 @@ const run = async () => {
         let report = new Report_1.Report();
         report.addInput(inputs);
         report.addPolicy(policies);
-        const policyEvaluator = null;
         // depending on which input.level is provided, run the appropriate checks
         if (inputs.level === "organization") {
             Logger_1.logger.info("Running org level checks");

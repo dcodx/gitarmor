@@ -1,6 +1,5 @@
 import { Organization, CheckResult } from "../../types/common/main";
 import { getCustomRolesForOrg } from "../../github/Organization";
-import { logger } from "../../utils/Logger";
 
 export class OrgCustomRolesChecks {
   private policy: any;

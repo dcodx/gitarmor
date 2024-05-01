@@ -1,9 +1,8 @@
-import { CheckResult, Policy, Inputs } from "../types/common/main";
+import { Policy, Inputs } from "../types/common/main";
 import { OrgPolicyEvaluator } from "../evaluators/OrgPolicyEvaluator";
 import { RepoPolicyEvaluator } from "../evaluators/RepoPolicyEvaluator";
 import { logger } from "./../utils/Logger";
 import fs from "fs";
-import { json } from "stream/consumers";
 
 export class Report {
   private orgEvaluators: Map<OrgPolicyEvaluator, RepoPolicyEvaluator[]>;

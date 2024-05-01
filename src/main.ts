@@ -7,10 +7,8 @@ import { Report } from "./reporting/Report";
 import { RepoPolicy, OrgPolicy, Repository } from "./types/common/main";
 import { loadPolicy } from "./utils/policies";
 import * as core from "@actions/core";
-import { summary } from "@actions/core/lib/summary";
 
 const run = async (): Promise<void> => {
-
   console.log(`
 
              GitArmor                                                                                       
@@ -27,7 +25,6 @@ const run = async (): Promise<void> => {
     let report = new Report();
     report.addInput(inputs);
     report.addPolicy(policies);
-    const policyEvaluator = null;
     // depending on which input.level is provided, run the appropriate checks
     if (inputs.level === "organization") {
       logger.info("Running org level checks");
@@ -72,7 +69,7 @@ const run = async (): Promise<void> => {
         repository,
         policies.repo as RepoPolicy,
       );
-      
+
       await policyEvaluator.evaluatePolicy();
       policyEvaluator.printCheckResults();
       report.addOneRepoEvaluator(policyEvaluator);
