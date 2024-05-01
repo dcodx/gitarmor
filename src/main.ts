@@ -9,7 +9,7 @@ import { loadPolicy } from "./utils/policies";
 import * as core from "@actions/core";
 
 const run = async (): Promise<void> => {
-  console.log(`
+  logger.info(`
 
              GitArmor                                                                                       
      by dcodx.com - version 1.0

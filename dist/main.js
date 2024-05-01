@@ -32,7 +32,7 @@ const Report_1 = require("./reporting/Report");
 const policies_1 = require("./utils/policies");
 const core = __importStar(require("@actions/core"));
 const run = async () => {
-    console.log(`
+    Logger_1.logger.info(`
 
              GitArmor                                                                                       
      by dcodx.com - version 1.0

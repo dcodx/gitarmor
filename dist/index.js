@@ -49505,7 +49505,7 @@ const Report_1 = __nccwpck_require__(9382);
 const policies_1 = __nccwpck_require__(7700);
 const core = __importStar(__nccwpck_require__(2186));
 const run = async () => {
-    console.log(`
+    Logger_1.logger.info(`
 
              GitArmor                                                                                       
      by dcodx.com - version 1.0
