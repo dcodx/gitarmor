@@ -2,8 +2,6 @@ import { CheckResult, Repository } from "../../types/common/main";
 import {
   getRepoActionsPermissions,
   getRepoSelectedActions,
-  getRepoWorkflows,
-  getRepoWorkflowActions,
 } from "../../github/Actions";
 import { logger } from "../../utils/Logger";
 

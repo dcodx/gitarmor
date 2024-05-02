@@ -32,6 +32,12 @@ const Report_1 = require("./reporting/Report");
 const policies_1 = require("./utils/policies");
 const core = __importStar(require("@actions/core"));
 const run = async () => {
+    Logger_1.logger.info(`
+
+             GitArmor                                                                                       
+     by dcodx.com - version 1.0
+              
+    `);
     try {
         const startTime = process.hrtime();
         const inputs = (0, Input_1.parseInputs)();
@@ -40,7 +46,6 @@ const run = async () => {
         let report = new Report_1.Report();
         report.addInput(inputs);
         report.addPolicy(policies);
-        const policyEvaluator = null;
         // depending on which input.level is provided, run the appropriate checks
         if (inputs.level === "organization") {
             Logger_1.logger.info("Running org level checks");

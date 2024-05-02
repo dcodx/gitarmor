@@ -36,6 +36,6 @@ For any issues or suggestions for improvement, please create an issue on the pro
 
 ## 🤝 Code of Conduct 
 
-This project adheres to a [Code of Conduct](.github/CODE_OF_CONDUCT.md). Participation in the GitArmor project means you agree to respect the code of conduct and treat all members of the community with kindness and respect. 💖
+This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). Participation in the GitArmor project means you agree to respect the code of conduct and treat all members of the community with kindness and respect. 💖
 
 Thank you for your contribution and involvement in making this project better! 🙏
