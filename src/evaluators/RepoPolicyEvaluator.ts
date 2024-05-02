@@ -34,7 +34,7 @@ export class RepoPolicyEvaluator {
 
     logger.debug("Repository policy for repo: " + this.repository.name);
     // Check the branch protection policy rule
-    if (this.policy.protected_branches.length > 0) {
+    if (this.policy.protected_branches && this.policy.protected_branches.length > 0) {
       const branch_protection = new BranchProtectionChecks(
         this.policy,
         this.repository,
