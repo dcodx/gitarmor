@@ -29,7 +29,7 @@ class RepoPolicyEvaluator {
         this.repositoryData = await (0, Repositories_1.getRepository)(this.repository.owner, this.repository.name);
         Logger_1.logger.debug("Repository policy for repo: " + this.repository.name);
         // Check the branch protection policy rule
-        if (this.policy.protected_branches.length > 0) {
+        if (this.policy.protected_branches && this.policy.protected_branches.length > 0) {
             const branch_protection = new BranchProtectionChecks_1.BranchProtectionChecks(this.policy, this.repository);
             const branch_protection_results = await branch_protection.checkBranchProtection();
             Logger_1.logger.debug(`Branch protection rule results: ${JSON.stringify(branch_protection_results, null, 2)}`);
