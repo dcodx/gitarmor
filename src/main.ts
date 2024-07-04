@@ -16,75 +16,66 @@ const run = async (): Promise<void> => {
               
     `);
 
+  // Adjusted part of the run function
   try {
     const startTime = process.hrtime();
     const inputs = parseInputs();
-    const policies: any = await loadPolicy(inputs);
 
+    const policies: any = await loadPolicy(inputs);
     logger.debug("DEBUG MODE: " + inputs.debug);
     let report = new Report();
     report.addInput(inputs);
     report.addPolicy(policies);
-    // depending on which input.level is provided, run the appropriate checks
-    if (inputs.level === "organization") {
-      logger.info("Running org level checks");
-
-      const organizationPolicyEvaluator = new OrgPolicyEvaluator(
-        inputs.org,
-        policies.org as OrgPolicy,
-      );
-
+  
+    if (inputs.level === "organization_only") {
+      logger.info("Running organization level checks only");
+      const organizationPolicyEvaluator = new OrgPolicyEvaluator(inputs.org, policies.org as OrgPolicy);
       await organizationPolicyEvaluator.evaluatePolicy();
       organizationPolicyEvaluator.printCheckResults();
       report.addOrgEvaluator(organizationPolicyEvaluator);
-
-      const repos = await getRepositoriesForOrg(inputs.org);
-      logger.info("Total Repos: " + repos.length);
-      await Promise.all(
-        repos.map(async (repo) => {
-          const repository: Repository = {
-            name: repo.name,
-            owner: inputs.org,
-          };
-          const repoPolicyEvaluator = new RepoPolicyEvaluator(
-            repository,
-            policies.repo as RepoPolicy,
-          );
-          await repoPolicyEvaluator.evaluatePolicy();
-          repoPolicyEvaluator.printCheckResults();
-          report.addRepoEvaluatorToOrg(
-            organizationPolicyEvaluator,
-            repoPolicyEvaluator,
-          );
-        }),
-      );
-    } else if (inputs.level === "repository") {
+    } else if (inputs.level === "repository_only") {
+      logger.info("Running repository level checks only");
       const repository: Repository = {
         name: inputs.repo,
         owner: inputs.org,
       };
-      logger.info("Running repo level checks");
+      const repoPolicyEvaluator = new RepoPolicyEvaluator(repository, policies.repo as RepoPolicy);
+      await repoPolicyEvaluator.evaluatePolicy();
+      repoPolicyEvaluator.printCheckResults();
+      report.addOneRepoEvaluator(repoPolicyEvaluator);
+    } else if (inputs.level === "organization_and_repository") {
+      logger.info("Running both organization and repository level checks");
+      logger.warn("⚠️ Running the tool with 'organization_and_repository' level might trigger the GitHub API rate limit. Please use it with caution.");
 
-      const policyEvaluator = new RepoPolicyEvaluator(
-        repository,
-        policies.repo as RepoPolicy,
-      );
-
-      await policyEvaluator.evaluatePolicy();
-      policyEvaluator.printCheckResults();
-      report.addOneRepoEvaluator(policyEvaluator);
+      // Organization checks
+      const organizationPolicyEvaluator = new OrgPolicyEvaluator(inputs.org, policies.org as OrgPolicy);
+      await organizationPolicyEvaluator.evaluatePolicy();
+      organizationPolicyEvaluator.printCheckResults();
+      report.addOrgEvaluator(organizationPolicyEvaluator);
+      // Repository checks within the organization
+      const repos = await getRepositoriesForOrg(inputs.org);
+      logger.info("Total Repos: " + repos.length);
+      await Promise.all(repos.map(async (repo) => {
+        const repository: Repository = {
+          name: repo.name,
+          owner: inputs.org,
+        };
+        const repoPolicyEvaluator = new RepoPolicyEvaluator(repository, policies.repo as RepoPolicy);
+        await repoPolicyEvaluator.evaluatePolicy();
+        repoPolicyEvaluator.printCheckResults();
+        report.addRepoEvaluatorToOrg(organizationPolicyEvaluator, repoPolicyEvaluator);
+      }));
     } else {
-      // TODO: Implement enterprise level checks
-      logger.info("Running enterprise level checks => Not implemented yet");
+      logger.info("Invalid level specified");
     }
-
+  
     report.prepareReports();
     report.writeReportToFile();
     if (process.env.GITHUB_ACTIONS) {
       core.setOutput("check-results-json", report.getReportJson());
       core.setOutput("check-results-text", report.getReportText());
     }
-
+  
     const endTime = process.hrtime(startTime);
     logger.debug(`Execution time: ${endTime[0]}s ${endTime[1] / 1000000}ms`);
   } catch (error) {

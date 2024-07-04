@@ -38,6 +38,7 @@ const run = async () => {
      by dcodx.com - version 1.0
               
     `);
+    // Adjusted part of the run function
     try {
         const startTime = process.hrtime();
         const inputs = (0, Input_1.parseInputs)();
@@ -46,13 +47,33 @@ const run = async () => {
         let report = new Report_1.Report();
         report.addInput(inputs);
         report.addPolicy(policies);
-        // depending on which input.level is provided, run the appropriate checks
-        if (inputs.level === "organization") {
-            Logger_1.logger.info("Running org level checks");
+        if (inputs.level === "organization_only") {
+            Logger_1.logger.info("Running organization level checks only");
             const organizationPolicyEvaluator = new OrgPolicyEvaluator_1.OrgPolicyEvaluator(inputs.org, policies.org);
             await organizationPolicyEvaluator.evaluatePolicy();
             organizationPolicyEvaluator.printCheckResults();
             report.addOrgEvaluator(organizationPolicyEvaluator);
+        }
+        else if (inputs.level === "repository_only") {
+            Logger_1.logger.info("Running repository level checks only");
+            const repository = {
+                name: inputs.repo,
+                owner: inputs.org,
+            };
+            const repoPolicyEvaluator = new RepoPolicyEvaluator_1.RepoPolicyEvaluator(repository, policies.repo);
+            await repoPolicyEvaluator.evaluatePolicy();
+            repoPolicyEvaluator.printCheckResults();
+            report.addOneRepoEvaluator(repoPolicyEvaluator);
+        }
+        else if (inputs.level === "organization_and_repository") {
+            Logger_1.logger.info("Running both organization and repository level checks");
+            Logger_1.logger.warn("⚠️ Running the tool with 'organization_and_repository' level might trigger the GitHub API rate limit. Please use it with caution.");
+            // Organization checks
+            const organizationPolicyEvaluator = new OrgPolicyEvaluator_1.OrgPolicyEvaluator(inputs.org, policies.org);
+            await organizationPolicyEvaluator.evaluatePolicy();
+            organizationPolicyEvaluator.printCheckResults();
+            report.addOrgEvaluator(organizationPolicyEvaluator);
+            // Repository checks within the organization
             const repos = await (0, Organization_1.getRepositoriesForOrg)(inputs.org);
             Logger_1.logger.info("Total Repos: " + repos.length);
             await Promise.all(repos.map(async (repo) => {
@@ -66,20 +87,8 @@ const run = async () => {
                 report.addRepoEvaluatorToOrg(organizationPolicyEvaluator, repoPolicyEvaluator);
             }));
         }
-        else if (inputs.level === "repository") {
-            const repository = {
-                name: inputs.repo,
-                owner: inputs.org,
-            };
-            Logger_1.logger.info("Running repo level checks");
-            const policyEvaluator = new RepoPolicyEvaluator_1.RepoPolicyEvaluator(repository, policies.repo);
-            await policyEvaluator.evaluatePolicy();
-            policyEvaluator.printCheckResults();
-            report.addOneRepoEvaluator(policyEvaluator);
-        }
         else {
-            // TODO: Implement enterprise level checks
-            Logger_1.logger.info("Running enterprise level checks => Not implemented yet");
+            Logger_1.logger.info("Invalid level specified");
         }
         report.prepareReports();
         report.writeReportToFile();
