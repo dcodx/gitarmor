@@ -57,7 +57,7 @@ npm install
 Create a `.env` file by using our sample configuration file `.env.sample`:
 ```text
 TOKEN=ghp_TKN
-LEVEL=repository
+LEVEL=repository_only # repository_only, organization_only, or organization_and_repository
 REPO=repo-name
 ORG=org-name
 DEBUG=false
@@ -65,8 +65,9 @@ POLICIES_PATH=policies
 ```
 
 where `LEVEL` is the scope of the checks:
-- `repository` for repository-level checks
-- `organization` for organization-level checks
+- `repository_only` for repository-level checks
+- `organization_only` for organization-level checks
+- `organization_and_repository` for organization-level and repositorty_level checks for all the repos in the organization
 
 Next, generate a Personal Access Token (PAT) from GitHub and input your settings into the `.env` file. Ensure your token has these permissions:
 - `repo: admin`
@@ -120,7 +121,7 @@ jobs:
           repo: ${{ github.repository }}
           org: ${{ github.repository_owner }}
           token: ${{ TOKEN }}
-          level: 'organization'
+          level: 'organization_only'
           policy-dir: './policies'
 ```
 
