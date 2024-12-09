@@ -64,15 +64,28 @@ class Report {
         let jsonReport = {};
         // Evaluation section
         report += "## 📑 Detailed Evaluation Findings \n\n";
-        if (this.inputs.level === "repository") {
+        if (this.inputs.level === "repository_only") {
             report += "### 📁 Repository Evaluator\n\n";
             report += this.formatRepoEvaluator(this.repoEvaluator);
-            jsonReport.repoEvalator = this.repoEvaluator;
+            jsonReport.repoEvaluator = this.repoEvaluator; // Corrected typo from 'repoEvalator' to 'repoEvaluator'
         }
-        else if (this.inputs.level === "organization") {
-            report += `### 🏢 Organization Evaluator\n\n`;
+        else if (this.inputs.level === "organization_only") {
+            report += "### 🏢 Organization Evaluator\n\n";
             this.orgEvaluators.forEach((repoEvaluators, orgEvaluator) => {
                 report += this.formatOrgEvaluator(orgEvaluator, repoEvaluators);
+            });
+            const orgEvaluatorsJson = Array.from(this.orgEvaluators.entries()).map(([orgEvaluator]) => ({
+                orgEvaluator: JSON.stringify(orgEvaluator),
+            }));
+            jsonReport.orgEvaluators = orgEvaluatorsJson;
+        }
+        else if (this.inputs.level === "organization_and_repository") {
+            report += "### 🏢 Organization Evaluator\n\n";
+            this.orgEvaluators.forEach((repoEvaluators, orgEvaluator) => {
+                report += this.formatOrgEvaluator(orgEvaluator, repoEvaluators);
+                repoEvaluators.forEach((repoEvaluator) => {
+                    report += this.formatRepoEvaluator(repoEvaluator);
+                });
             });
             const orgEvaluatorsJson = Array.from(this.orgEvaluators.entries()).map(([orgEvaluator, repoEvaluators]) => ({
                 orgEvaluator: JSON.stringify(orgEvaluator),

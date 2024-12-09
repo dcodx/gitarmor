@@ -12,13 +12,19 @@ const loadPolicy = async (inputs) => {
     let policy = {};
     try {
         Logger_1.logger.debug(`Loading policies from: ${inputs.policy_dir}`);
-        if (inputs.level === "organization") {
+        if (inputs.level === "organization_only") {
             const orgPolicyFile = fs_1.default.readFileSync(path_1.default.join(inputs.policy_dir, "organization.yml"), "utf8");
             policy.org = js_yaml_1.default.load(orgPolicyFile);
+        }
+        else if (inputs.level === "repository_only") {
             const repoPolicyFile = fs_1.default.readFileSync(path_1.default.join(inputs.policy_dir, "repository.yml"), "utf8");
             policy.repo = js_yaml_1.default.load(repoPolicyFile);
         }
-        else if (inputs.level === "repository") {
+        else if (inputs.level === "organization_and_repository") {
+            // Load organization policy
+            const orgPolicyFile = fs_1.default.readFileSync(path_1.default.join(inputs.policy_dir, "organization.yml"), "utf8");
+            policy.org = js_yaml_1.default.load(orgPolicyFile);
+            // Load repository policy
             const repoPolicyFile = fs_1.default.readFileSync(path_1.default.join(inputs.policy_dir, "repository.yml"), "utf8");
             policy.repo = js_yaml_1.default.load(repoPolicyFile);
         }
