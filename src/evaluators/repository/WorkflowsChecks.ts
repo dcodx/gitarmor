@@ -3,7 +3,7 @@ import {
   getRepoDefaultWorkflowsPermissions,
   getRepoWorkflowAccessPermissions,
 } from "../../github/Actions";
-import { logger } from "../../utils/Logger";
+import { logger } from "../../utils/logger";
 
 export class WorkflowsChecks {
   private policy: any;

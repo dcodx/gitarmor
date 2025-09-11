@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GHASChecks = void 0;
 const Repositories_1 = require("../../github/Repositories");
-const Logger_1 = require("../../utils/Logger");
+const logger_1 = require("../../utils/logger");
 class GHASChecks {
     policy;
     repository;
@@ -13,7 +13,7 @@ class GHASChecks {
         this.repositoryData = repositoryData;
     }
     checkRepositoryGHASstatus() {
-        Logger_1.logger.debug(`Checking GHAS status for ${this.repository.owner}/${this.repository.name}`);
+        logger_1.logger.debug(`Checking GHAS status for ${this.repository.owner}/${this.repository.name}`);
         if (this.policy.advanced_security.ghas) {
             return this.getStatusForFeature("advanced_security");
         }

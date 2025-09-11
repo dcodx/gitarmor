@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getWebHookConfig = exports.getWebHooks = void 0;
 const GitArmorKit_1 = require("./GitArmorKit");
-const Logger_1 = require("../utils/Logger");
+const logger_1 = require("../utils/logger");
 const getWebHooks = async (owner, repository) => {
     let res = [];
     try {
@@ -17,7 +17,7 @@ const getWebHooks = async (owner, repository) => {
         res = iterator;
     }
     catch (error) {
-        Logger_1.logger.error(`There was an error. Please check the logs ${error}`);
+        logger_1.logger.error(`There was an error. Please check the logs ${error}`);
     }
     return res;
 };
@@ -38,7 +38,7 @@ const getWebHookConfig = async (owner, repository, hook_id) => {
         res = response.data;
     }
     catch (error) {
-        Logger_1.logger.error(`There was an error. Please check the logs ${error}`);
+        logger_1.logger.error(`There was an error. Please check the logs ${error}`);
     }
     return res;
 };

@@ -1,7 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import { throttling } from "@octokit/plugin-throttling";
 import * as dotenv from "dotenv";
-import { logger } from "../utils/Logger";
+import { logger } from "../utils/logger";
 import { getInput } from "@actions/core";
 dotenv.config();
 

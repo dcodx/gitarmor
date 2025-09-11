@@ -1,6 +1,6 @@
 import { Endpoints } from "@octokit/types";
 import { GitArmorKit } from "./GitArmorKit";
-import { logger } from "../utils/Logger";
+import { logger } from "../utils/logger";
 
 export const getRepositoriesForTeamAsAdmin = async (
   org: string,

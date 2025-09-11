@@ -1,7 +1,7 @@
 import { Policy, Inputs } from "../types/common/main";
 import { OrgPolicyEvaluator } from "../evaluators/OrgPolicyEvaluator";
 import { RepoPolicyEvaluator } from "../evaluators/RepoPolicyEvaluator";
-import { logger } from "./../utils/Logger";
+import { logger } from "./../utils/logger";
 import fs from "fs";
 
 export class Report {
@@ -96,14 +96,16 @@ export class Report {
         report += this.formatOrgEvaluator(orgEvaluator, repoEvaluators);
       });
 
-      const orgEvaluatorsJson = Array.from(this.orgEvaluators.entries()).map(([orgEvaluator]) => ({
-        orgEvaluator: JSON.stringify(orgEvaluator),
-      }));
+      const orgEvaluatorsJson = Array.from(this.orgEvaluators.entries()).map(
+        ([orgEvaluator]) => ({
+          orgEvaluator: JSON.stringify(orgEvaluator),
+        }),
+      );
       jsonReport.orgEvaluators = orgEvaluatorsJson;
     } else if (this.inputs.level === "organization_and_repository") {
       report += "### 🏢 Organization Evaluator\n\n";
       this.orgEvaluators.forEach((repoEvaluators, orgEvaluator) => {
-        report += this.formatOrgEvaluator(orgEvaluator,repoEvaluators);
+        report += this.formatOrgEvaluator(orgEvaluator, repoEvaluators);
         repoEvaluators.forEach((repoEvaluator) => {
           report += this.formatRepoEvaluator(repoEvaluator);
         });

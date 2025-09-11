@@ -1,6 +1,6 @@
 import { GitArmorKit } from "./GitArmorKit";
 import { WebHook, WebHookConfig } from "../types/common/main";
-import { logger } from "../utils/Logger";
+import { logger } from "../utils/logger";
 
 export const getWebHooks = async (
   owner: string,
