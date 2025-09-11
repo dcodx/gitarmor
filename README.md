@@ -64,10 +64,12 @@ DEBUG=false
 POLICIES_PATH=policies
 ```
 
-where `LEVEL` is the scope of the checks:
-- `repository_only` for repository-level checks
-- `organization_only` for organization-level checks
-- `organization_and_repository` for organization-level and repositorty_level checks for all the repos in the organization
+where `LEVEL` controls which checks GitArmor will run:
+- `repository_only` - runs repository-level checks only for the specified repository (requires REPO setting)
+- `organization_only` - runs organization-level checks only, without any repository checks
+- `organization_and_repository` - runs organization-level checks first, then automatically runs repository-level checks for ALL repositories in the organization
+
+**Note**: Use `organization_only` if you want to run organization checks without automatically scanning all repositories. Use `organization_and_repository` if you want both organization and repository checks for all repos in the org.
 
 Next, generate a Personal Access Token (PAT) from GitHub and input your settings into the `.env` file. Ensure your token has these permissions:
 - `repo: admin`

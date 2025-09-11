@@ -14,7 +14,7 @@ inputs:
     description: 'GitHub Token (GITHUB_TOKEN) with admin access to the repository/organization'
     required: true
   level:
-    description: 'Level on which to run GitArmor - repository or organization'
+    description: 'Level on which to run GitArmor - repository_only, organization_only, or organization_and_repository'
     required: true
   policy-dir:
     description: 'Location of the directory containing the policies'

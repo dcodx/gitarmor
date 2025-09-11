@@ -28,7 +28,7 @@ jobs:
           repo: ${{ github.repository }}
           org: ${{ github.repository_owner }}
           token: ${{ steps.app-token.outputs.token }}
-          level: 'organization'
+          level: 'organization_only'
           policy-dir: './policies'
 
     - name: Get the output

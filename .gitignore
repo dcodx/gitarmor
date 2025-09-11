@@ -133,3 +133,4 @@ out
 .env
 my.secrets
 output-report.*
+dist/

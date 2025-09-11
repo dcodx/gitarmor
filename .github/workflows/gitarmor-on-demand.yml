@@ -12,9 +12,9 @@ on:
         required: true
         default: 'dearmory'
       level:
-        description: 'Level'
+        description: 'Level (repository_only, organization_only, or organization_and_repository)'
         required: true
-        default: 'repository'
+        default: 'repository_only'
 
 jobs:
   run-gitarmor:
