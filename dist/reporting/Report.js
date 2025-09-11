@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Report = void 0;
-const Logger_1 = require("./../utils/Logger");
+const logger_1 = require("../utils/logger");
 const fs_1 = __importDefault(require("fs"));
 class Report {
     orgEvaluators;
@@ -40,10 +40,10 @@ class Report {
         if (this.finalReportText && this.finalReportJson) {
             fs_1.default.writeFileSync("output-report.md", this.finalReportText);
             fs_1.default.writeFileSync("output-report.json", JSON.stringify(this.finalReportJson, null, 2));
-            Logger_1.logger.info("Report written to file: output-report.md and output-report.json");
+            logger_1.logger.info("Report written to file: output-report.md and output-report.json");
         }
         else {
-            Logger_1.logger.error("No report to write");
+            logger_1.logger.error("No report to write");
         }
     }
     addOneRepoEvaluator(repoEvaluator) {

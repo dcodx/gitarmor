@@ -47793,7 +47793,7 @@ function wrappy (fn, cb) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.OrgPolicyEvaluator = void 0;
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const OrgGHASChecks_1 = __nccwpck_require__(7137);
 const OrgAuthenticationChecks_1 = __nccwpck_require__(7124);
 const OrgCustomRolesChecks_1 = __nccwpck_require__(8731);
@@ -47811,43 +47811,43 @@ class OrgPolicyEvaluator {
     }
     // This method evaluates the policy for the repository
     async evaluatePolicy() {
-        Logger_1.logger.info("Running checks for organization policy against: " +
+        logger_1.logger.info("Running checks for organization policy against: " +
             this.organization.name);
-        Logger_1.logger.debug("Organization policy for org: " + this.organization.name);
+        logger_1.logger.debug("Organization policy for org: " + this.organization.name);
         // Get the organization data from the API
         this.organization.data = await (0, Organization_1.getOrganization)(this.organization.name);
         // Check MemberPrivileges policy rule
         if (this.policy.member_privileges) {
             const member_privileges = await new PrivilegesChecks_1.PrivilegesChecks(this.organization, this.policy).checkPrivileges();
-            Logger_1.logger.debug(`Member privileges results: ${JSON.stringify(member_privileges)}`);
+            logger_1.logger.debug(`Member privileges results: ${JSON.stringify(member_privileges)}`);
             this.orgCheckResults.push(member_privileges);
         }
         // Check org level GHAS settings
         if (this.policy.advanced_security) {
             const ghas_checks = await new OrgGHASChecks_1.OrgGHASChecks(this.policy, this.organization, this.organization.data).evaluate();
-            Logger_1.logger.debug(`Org GHAS results: ${JSON.stringify(ghas_checks)}`);
+            logger_1.logger.debug(`Org GHAS results: ${JSON.stringify(ghas_checks)}`);
             this.orgCheckResults.push(ghas_checks);
         }
         // check authentication settings
         if (this.policy.authentication) {
             const authentication_checks = await new OrgAuthenticationChecks_1.OrgAuthenticationChecks(this.policy, this.organization, this.organization.data).evaluate();
-            Logger_1.logger.debug(`Org Authentication results: ${JSON.stringify(authentication_checks)}`);
+            logger_1.logger.debug(`Org Authentication results: ${JSON.stringify(authentication_checks)}`);
             this.orgCheckResults.push(authentication_checks);
         }
         // check custom repository roles
         if (this.policy.custom_roles) {
             const custom_roles_checks = await new OrgCustomRolesChecks_1.OrgCustomRolesChecks(this.policy, this.organization, this.organization.data).evaluate();
-            Logger_1.logger.debug(`Org Custom Roles results: ${JSON.stringify(custom_roles_checks)}`);
+            logger_1.logger.debug(`Org Custom Roles results: ${JSON.stringify(custom_roles_checks)}`);
             this.orgCheckResults.push(custom_roles_checks);
         }
     }
     printCheckResults() {
-        Logger_1.logger.info("------------------------------------------------------------------------");
-        Logger_1.logger.info(`Organization policy results - ${this.organization.name}:`);
-        Logger_1.logger.info("------------------------------------------------------------------------");
+        logger_1.logger.info("------------------------------------------------------------------------");
+        logger_1.logger.info(`Organization policy results - ${this.organization.name}:`);
+        logger_1.logger.info("------------------------------------------------------------------------");
         this.orgCheckResults.forEach((checkResult) => {
             const emoji = checkResult.pass === null ? "😐" : checkResult.pass ? "✅" : "❌";
-            Logger_1.logger.info(`[${emoji}] Check: ${checkResult.name} - Pass: ${checkResult.pass} \n${JSON.stringify(checkResult.data, null, 3)}`);
+            logger_1.logger.info(`[${emoji}] Check: ${checkResult.name} - Pass: ${checkResult.pass} \n${JSON.stringify(checkResult.data, null, 3)}`);
         });
     }
     getCheckResults() {
@@ -47869,7 +47869,7 @@ exports.OrgPolicyEvaluator = OrgPolicyEvaluator;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.RepoPolicyEvaluator = void 0;
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const BranchProtectionChecks_1 = __nccwpck_require__(8377);
 const GHASChecks_1 = __nccwpck_require__(7161);
 const Repositories_1 = __nccwpck_require__(3354);
@@ -47895,64 +47895,64 @@ class RepoPolicyEvaluator {
     async evaluatePolicy() {
         // Get the repository data from the API
         this.repositoryData = await (0, Repositories_1.getRepository)(this.repository.owner, this.repository.name);
-        Logger_1.logger.debug("Repository policy for repo: " + this.repository.name);
+        logger_1.logger.debug("Repository policy for repo: " + this.repository.name);
         // Check the branch protection policy rule
         if (this.policy.protected_branches && this.policy.protected_branches.length > 0) {
             const branch_protection = new BranchProtectionChecks_1.BranchProtectionChecks(this.policy, this.repository);
             const branch_protection_results = await branch_protection.checkBranchProtection();
-            Logger_1.logger.debug(`Branch protection rule results: ${JSON.stringify(branch_protection_results, null, 2)}`);
+            logger_1.logger.debug(`Branch protection rule results: ${JSON.stringify(branch_protection_results, null, 2)}`);
             this.repositoryCheckResults.push(branch_protection_results);
             // Check if require pull request before merging is enabled for the protected branches
             const branch_protection_pull_request_results = await branch_protection.checkRequirePullRequest();
-            Logger_1.logger.debug(`Branch protection pull requests rule results: ${JSON.stringify(branch_protection_pull_request_results, null, 2)}`);
+            logger_1.logger.debug(`Branch protection pull requests rule results: ${JSON.stringify(branch_protection_pull_request_results, null, 2)}`);
             this.repositoryCheckResults.push(branch_protection_pull_request_results);
         }
         // Check the files exist policy rule
         if (this.policy.file_exists && this.policy.file_exists.length > 0) {
             const files_exist = await new FilesExistChecks_1.FilesExistChecks(this.repository, this.policy).checkFilesExist();
-            Logger_1.logger.debug(`Files exists results: ${JSON.stringify(files_exist)}`);
+            logger_1.logger.debug(`Files exists results: ${JSON.stringify(files_exist)}`);
             this.repositoryCheckResults.push(files_exist);
         }
         //Run the GHAS checks
         if (this.policy.advanced_security) {
             const ghas_checks = await new GHASChecks_1.GHASChecks(this.policy, this.repository, this.repositoryData).evaluate();
-            Logger_1.logger.debug(`GHAS results: ${JSON.stringify(ghas_checks)}`);
+            logger_1.logger.debug(`GHAS results: ${JSON.stringify(ghas_checks)}`);
             this.repositoryCheckResults.push(ghas_checks);
         }
         //Run Actions checks
         if (this.policy.allowed_actions) {
             const actions_checks = await new ActionsChecks_1.ActionsChecks(this.policy, this.repository).checkActionsPermissions();
-            Logger_1.logger.debug(`Action checks results: ${JSON.stringify(actions_checks)}`);
+            logger_1.logger.debug(`Action checks results: ${JSON.stringify(actions_checks)}`);
             this.repositoryCheckResults.push(actions_checks);
         }
         //Run workflow checks
         if (this.policy.workflows) {
             const workflow_checks = await new WorkflowsChecks_1.WorkflowsChecks(this.policy, this.repository).checkWorkflowsDefaultPermissions();
-            Logger_1.logger.debug(`Workflow checks results: ${JSON.stringify(workflow_checks)}`);
+            logger_1.logger.debug(`Workflow checks results: ${JSON.stringify(workflow_checks)}`);
             //This check only applies to private and internal repositories
             const workflow_access_checks = await new WorkflowsChecks_1.WorkflowsChecks(this.policy, this.repository).checkWorkflowsAccessPermissions();
-            Logger_1.logger.debug(`Workflow access checks results: ${JSON.stringify(workflow_access_checks)}`);
+            logger_1.logger.debug(`Workflow access checks results: ${JSON.stringify(workflow_access_checks)}`);
         }
         //Run runner checks
         if (this.policy.runners) {
             const runner_checks = await new RunnersChecks_1.RunnersChecks(this.policy, this.repository).checkRunnersPermissions();
-            Logger_1.logger.debug(`Runner checks results: ${JSON.stringify(runner_checks)}`);
+            logger_1.logger.debug(`Runner checks results: ${JSON.stringify(runner_checks)}`);
             this.repositoryCheckResults.push(runner_checks);
         }
         if (this.policy.webhooks) {
             const webhook_checks = await new WebHooksChecks_1.WebHooksChecks(this.policy, this.repository).checkWebHooks();
-            Logger_1.logger.debug(`Webhook checks results: ${JSON.stringify(webhook_checks)}`);
+            logger_1.logger.debug(`Webhook checks results: ${JSON.stringify(webhook_checks)}`);
             this.repositoryCheckResults.push(webhook_checks);
         }
     }
     // Run webhook checks
     printCheckResults() {
-        Logger_1.logger.info("------------------------------------------------------------------------");
-        Logger_1.logger.info(`Repository policy results - ${this.getFullRepositoryName()}:`);
-        Logger_1.logger.info("------------------------------------------------------------------------");
+        logger_1.logger.info("------------------------------------------------------------------------");
+        logger_1.logger.info(`Repository policy results - ${this.getFullRepositoryName()}:`);
+        logger_1.logger.info("------------------------------------------------------------------------");
         this.repositoryCheckResults.forEach((checkResult) => {
             const emoji = checkResult.pass === null ? "😐" : checkResult.pass ? "✅" : "❌";
-            Logger_1.logger.info(`[${emoji}] Check: ${checkResult.name} - Pass: ${checkResult.pass} \n${JSON.stringify(checkResult.data, null, 3)}`);
+            logger_1.logger.info(`[${emoji}] Check: ${checkResult.name} - Pass: ${checkResult.pass} \n${JSON.stringify(checkResult.data, null, 3)}`);
         });
     }
     getFullRepositoryName() {
@@ -48297,7 +48297,7 @@ exports.PrivilegesChecks = PrivilegesChecks;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ActionsChecks = void 0;
 const Actions_1 = __nccwpck_require__(5248);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const POLICY_VALUES = ["none", "all", "local_only", "selected"];
 class ActionsChecks {
     policy;
@@ -48317,7 +48317,7 @@ class ActionsChecks {
         switch (actionsPermissionsPolicy) {
             case "selected":
                 if (!this.policy.allowed_actions.selected.patterns_allowed) {
-                    Logger_1.logger.error("error: the policy (.yml) should have the list of patterns_allowed when permission is 'selected'");
+                    logger_1.logger.error("error: the policy (.yml) should have the list of patterns_allowed when permission is 'selected'");
                     return this.createResult(false, actionsPermissionsAllowedActions, actionsPermissionsPolicy);
                 }
                 if (actionsPermissionsAllowedActions !== "selected")
@@ -48337,7 +48337,7 @@ class ActionsChecks {
             case "none":
                 return this.createResult(actionsPermissionsPolicy === actionsPermissionsAllowedActions, actionsPermissionsAllowedActions, actionsPermissionsPolicy);
             default:
-                Logger_1.logger.error(`error: invalid policy value '${actionsPermissionsPolicy}'. It should be one of ${POLICY_VALUES.join(", ")}.`);
+                logger_1.logger.error(`error: invalid policy value '${actionsPermissionsPolicy}'. It should be one of ${POLICY_VALUES.join(", ")}.`);
         }
     }
     createResult(actions_permissions, github_allowed_actions, policy_allowed_actions) {
@@ -48415,7 +48415,7 @@ exports.ActionsChecks = ActionsChecks;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BranchProtectionChecks = void 0;
 const Repositories_1 = __nccwpck_require__(3354);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 class BranchProtectionChecks {
     policy;
     repository;
@@ -48510,7 +48510,7 @@ class BranchProtectionChecks {
     }
     getProtectedBranchesToCheck(branchesToCheck, protectedBranches) {
         const branchesAvailable = branchesToCheck.filter((branch) => protectedBranches.map((branch) => branch.name).includes(branch));
-        Logger_1.logger.debug("Only these branches will be checked against branch protection rules: " +
+        logger_1.logger.debug("Only these branches will be checked against branch protection rules: " +
             branchesAvailable);
         return branchesAvailable;
     }
@@ -48538,7 +48538,7 @@ class BranchProtectionChecks {
             }
             catch (error) {
                 // If the branch is protected but no rules are set.
-                Logger_1.logger.debug(`Exception: ${error}`);
+                logger_1.logger.debug(`Exception: ${error}`);
                 results[branch] = {
                     error: "No branch protection rules set for this branch",
                 };
@@ -48665,7 +48665,7 @@ exports.BranchProtectionChecks = BranchProtectionChecks;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GHASChecks = void 0;
 const Repositories_1 = __nccwpck_require__(3354);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 class GHASChecks {
     policy;
     repository;
@@ -48676,7 +48676,7 @@ class GHASChecks {
         this.repositoryData = repositoryData;
     }
     checkRepositoryGHASstatus() {
-        Logger_1.logger.debug(`Checking GHAS status for ${this.repository.owner}/${this.repository.name}`);
+        logger_1.logger.debug(`Checking GHAS status for ${this.repository.owner}/${this.repository.name}`);
         if (this.policy.advanced_security.ghas) {
             return this.getStatusForFeature("advanced_security");
         }
@@ -48957,7 +48957,7 @@ exports.WebHooksChecks = WebHooksChecks;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WorkflowsChecks = void 0;
 const Actions_1 = __nccwpck_require__(5248);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 class WorkflowsChecks {
     policy;
     repository;
@@ -48978,12 +48978,12 @@ class WorkflowsChecks {
         try {
             const workflowsAccessPermissions = await (0, Actions_1.getRepoWorkflowAccessPermissions)(this.repository.owner, this.repository.name);
             const workflowsAccessPermissionsResult = workflowsAccessPermissions.access_level;
-            Logger_1.logger.debug(`Workflow access permissions result: ${workflowsAccessPermissionsResult}`);
+            logger_1.logger.debug(`Workflow access permissions result: ${workflowsAccessPermissionsResult}`);
             const workflowsAccessPermissionsPolicy = this.policy.workflows.access_level;
             return this.createWorkflowsAccessPermissionsResult(workflowsAccessPermissionsResult == workflowsAccessPermissionsPolicy);
         }
         catch (error) {
-            Logger_1.logger.error(`not available for public repositories`);
+            logger_1.logger.error(`not available for public repositories`);
             return this.createWorkflowsAccessPermissionsResult(false, "not available for public repositories");
         }
     }
@@ -49030,7 +49030,7 @@ exports.WorkflowsChecks = WorkflowsChecks;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRepoWorkflowActions = exports.getRepoWorkflows = exports.getRepoWorkflowAccessPermissions = exports.getRepoDefaultWorkflowsPermissions = exports.getRepoSelectedActions = exports.getRepoActionsPermissions = void 0;
 const GitArmorKit_1 = __nccwpck_require__(2009);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 //Get GitHub Actions permissions for a repository
 const getRepoActionsPermissions = async (owner, repo) => {
     try {
@@ -49042,7 +49042,7 @@ const getRepoActionsPermissions = async (owner, repo) => {
         return response.data;
     }
     catch (error) {
-        Logger_1.logger.error(error.message);
+        logger_1.logger.error(error.message);
         throw error;
     }
 };
@@ -49142,7 +49142,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GitArmorKit = void 0;
 const rest_1 = __nccwpck_require__(5375);
 const dotenv = __importStar(__nccwpck_require__(2437));
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const core_1 = __nccwpck_require__(2186);
 dotenv.config();
 class GitArmorKit extends rest_1.Octokit {
@@ -49154,14 +49154,14 @@ class GitArmorKit extends rest_1.Octokit {
                 onRateLimit: (retryAfter, options, octokit) => {
                     octokit.log.warn(`Request quota exhausted for request ${options.method} ${options.url}`);
                     if (options.request.retryCount <= 2) {
-                        Logger_1.logger.debug(`Retrying after ${retryAfter} seconds!`);
+                        logger_1.logger.debug(`Retrying after ${retryAfter} seconds!`);
                         return true;
                     }
                 },
                 onSecondaryRateLimit: (retryAfter, options, octokit) => {
                     octokit.log.warn(`Secondary rate limit for request ${options.method} ${options.url}`);
                     if (options.request.retryCount <= 2) {
-                        Logger_1.logger.debug(`Secondary Limit - Retrying after ${retryAfter} seconds!`);
+                        logger_1.logger.debug(`Secondary Limit - Retrying after ${retryAfter} seconds!`);
                         return true;
                     }
                 },
@@ -49182,7 +49182,7 @@ exports.GitArmorKit = GitArmorKit;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getCustomRolesForOrg = exports.getSecurityTeamsForOrg = exports.getOrganization = exports.getRepositoriesForOrg = void 0;
 const GitArmorKit_1 = __nccwpck_require__(2009);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 // Get all repositories for an organization
 const getRepositoriesForOrg = async (org) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
@@ -49222,7 +49222,7 @@ const getCustomRolesForOrg = async (org) => {
         return data;
     }
     catch (error) {
-        Logger_1.logger.error(`Error in getCustomRolesForOrg: ${error.message}`);
+        logger_1.logger.error(`Error in getCustomRolesForOrg: ${error.message}`);
         return { total_count: 0, custom_roles: [] };
     }
 };
@@ -49239,7 +49239,7 @@ exports.getCustomRolesForOrg = getCustomRolesForOrg;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRepositoryCodeScanningAnalysis = exports.getRepoDependabotSecurityUpdates = exports.getRepoDependabotAlerts = exports.getRepoFile = exports.getRepoBranchProtection = exports.getRepoProtectedBranches = exports.getRepoBranch = exports.getRepoCollaborators = exports.getRepoPullRequests = exports.getRepository = exports.getRepositoriesForTeamAsAdmin = void 0;
 const GitArmorKit_1 = __nccwpck_require__(2009);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const getRepositoriesForTeamAsAdmin = async (org, teamSlug) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
     //get team id from slug
@@ -49375,7 +49375,7 @@ const getRepositoryCodeScanningAnalysis = async (owner, repo) => {
         return response.data;
     }
     catch (error) {
-        Logger_1.logger.debug(`Code scanning analysis fetching error: ${error.message}`);
+        logger_1.logger.debug(`Code scanning analysis fetching error: ${error.message}`);
         if ((error.status === 403 &&
             error.message.includes("Code scanning is not enabled for this repository")) ||
             error.message.includes("Advanced Security must be enabled for this repository to use code scanning.") ||
@@ -49422,7 +49422,7 @@ exports.getRepoRunners = getRepoRunners;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getWebHookConfig = exports.getWebHooks = void 0;
 const GitArmorKit_1 = __nccwpck_require__(2009);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const getWebHooks = async (owner, repository) => {
     let res = [];
     try {
@@ -49437,7 +49437,7 @@ const getWebHooks = async (owner, repository) => {
         res = iterator;
     }
     catch (error) {
-        Logger_1.logger.error(`There was an error. Please check the logs ${error}`);
+        logger_1.logger.error(`There was an error. Please check the logs ${error}`);
     }
     return res;
 };
@@ -49458,7 +49458,7 @@ const getWebHookConfig = async (owner, repository, hook_id) => {
         res = response.data;
     }
     catch (error) {
-        Logger_1.logger.error(`There was an error. Please check the logs ${error}`);
+        logger_1.logger.error(`There was an error. Please check the logs ${error}`);
     }
     return res;
 };
@@ -49496,16 +49496,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const Input_1 = __nccwpck_require__(9378);
+const input_1 = __nccwpck_require__(5073);
 const Organization_1 = __nccwpck_require__(7155);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const RepoPolicyEvaluator_1 = __nccwpck_require__(8949);
 const OrgPolicyEvaluator_1 = __nccwpck_require__(5411);
 const Report_1 = __nccwpck_require__(9382);
 const policies_1 = __nccwpck_require__(7700);
 const core = __importStar(__nccwpck_require__(2186));
 const run = async () => {
-    Logger_1.logger.info(`
+    logger_1.logger.info(`
 
              GitArmor                                                                                       
      by dcodx.com - version 1.0
@@ -49514,21 +49514,21 @@ const run = async () => {
     // Adjusted part of the run function
     try {
         const startTime = process.hrtime();
-        const inputs = (0, Input_1.parseInputs)();
+        const inputs = (0, input_1.parseInputs)();
         const policies = await (0, policies_1.loadPolicy)(inputs);
-        Logger_1.logger.debug("DEBUG MODE: " + inputs.debug);
+        logger_1.logger.debug("DEBUG MODE: " + inputs.debug);
         let report = new Report_1.Report();
         report.addInput(inputs);
         report.addPolicy(policies);
         if (inputs.level === "organization_only") {
-            Logger_1.logger.info("Running organization level checks only");
+            logger_1.logger.info("Running organization level checks only");
             const organizationPolicyEvaluator = new OrgPolicyEvaluator_1.OrgPolicyEvaluator(inputs.org, policies.org);
             await organizationPolicyEvaluator.evaluatePolicy();
             organizationPolicyEvaluator.printCheckResults();
             report.addOrgEvaluator(organizationPolicyEvaluator);
         }
         else if (inputs.level === "repository_only") {
-            Logger_1.logger.info("Running repository level checks only");
+            logger_1.logger.info("Running repository level checks only");
             const repository = {
                 name: inputs.repo,
                 owner: inputs.org,
@@ -49539,8 +49539,8 @@ const run = async () => {
             report.addOneRepoEvaluator(repoPolicyEvaluator);
         }
         else if (inputs.level === "organization_and_repository") {
-            Logger_1.logger.info("Running both organization and repository level checks");
-            Logger_1.logger.warn("⚠️ Running the tool with 'organization_and_repository' level might trigger the GitHub API rate limit. Please use it with caution.");
+            logger_1.logger.info("Running both organization and repository level checks");
+            logger_1.logger.warn("⚠️ Running the tool with 'organization_and_repository' level might trigger the GitHub API rate limit. Please use it with caution.");
             // Organization checks
             const organizationPolicyEvaluator = new OrgPolicyEvaluator_1.OrgPolicyEvaluator(inputs.org, policies.org);
             await organizationPolicyEvaluator.evaluatePolicy();
@@ -49548,7 +49548,7 @@ const run = async () => {
             report.addOrgEvaluator(organizationPolicyEvaluator);
             // Repository checks within the organization
             const repos = await (0, Organization_1.getRepositoriesForOrg)(inputs.org);
-            Logger_1.logger.info("Total Repos: " + repos.length);
+            logger_1.logger.info("Total Repos: " + repos.length);
             await Promise.all(repos.map(async (repo) => {
                 const repository = {
                     name: repo.name,
@@ -49561,7 +49561,7 @@ const run = async () => {
             }));
         }
         else {
-            Logger_1.logger.info("Invalid level specified");
+            logger_1.logger.info("Invalid level specified");
         }
         report.prepareReports();
         report.writeReportToFile();
@@ -49570,14 +49570,14 @@ const run = async () => {
             core.setOutput("check-results-text", report.getReportText());
         }
         const endTime = process.hrtime(startTime);
-        Logger_1.logger.debug(`Execution time: ${endTime[0]}s ${endTime[1] / 1000000}ms`);
+        logger_1.logger.debug(`Execution time: ${endTime[0]}s ${endTime[1] / 1000000}ms`);
     }
     catch (error) {
         if (process.env.GITHUB_ACTIONS) {
             core.setFailed(error);
         }
         else {
-            Logger_1.logger.error(error.message);
+            logger_1.logger.error(error.message);
         }
     }
 };
@@ -49596,7 +49596,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Report = void 0;
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 class Report {
     orgEvaluators;
@@ -49632,10 +49632,10 @@ class Report {
         if (this.finalReportText && this.finalReportJson) {
             fs_1.default.writeFileSync("output-report.md", this.finalReportText);
             fs_1.default.writeFileSync("output-report.json", JSON.stringify(this.finalReportJson, null, 2));
-            Logger_1.logger.info("Report written to file: output-report.md and output-report.json");
+            logger_1.logger.info("Report written to file: output-report.md and output-report.json");
         }
         else {
-            Logger_1.logger.error("No report to write");
+            logger_1.logger.error("No report to write");
         }
     }
     addOneRepoEvaluator(repoEvaluator) {
@@ -49761,7 +49761,7 @@ exports.Report = Report;
 
 /***/ }),
 
-/***/ 9378:
+/***/ 5073:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -49769,7 +49769,7 @@ exports.Report = Report;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseInputs = void 0;
 const core_1 = __nccwpck_require__(2186);
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const parseInputs = () => {
     // read inputs from .env file or action inputs
     const inputs = {
@@ -49788,7 +49788,7 @@ const parseInputs = () => {
         throw new Error("You must provide required inputs. Current inputs: " +
             JSON.stringify(inputs));
     }
-    Logger_1.logger.debug("Inputs: " + JSON.stringify(inputs));
+    logger_1.logger.debug("Inputs: " + JSON.stringify(inputs));
     return inputs;
 };
 exports.parseInputs = parseInputs;
@@ -49796,7 +49796,7 @@ exports.parseInputs = parseInputs;
 
 /***/ }),
 
-/***/ 7674:
+/***/ 8836:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -49836,11 +49836,11 @@ exports.loadPolicy = void 0;
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const js_yaml_1 = __importDefault(__nccwpck_require__(1917));
-const Logger_1 = __nccwpck_require__(7674);
+const logger_1 = __nccwpck_require__(8836);
 const loadPolicy = async (inputs) => {
     let policy = {};
     try {
-        Logger_1.logger.debug(`Loading policies from: ${inputs.policy_dir}`);
+        logger_1.logger.debug(`Loading policies from: ${inputs.policy_dir}`);
         if (inputs.level === "organization_only") {
             const orgPolicyFile = fs_1.default.readFileSync(path_1.default.join(inputs.policy_dir, "organization.yml"), "utf8");
             policy.org = js_yaml_1.default.load(orgPolicyFile);
@@ -49857,11 +49857,11 @@ const loadPolicy = async (inputs) => {
             const repoPolicyFile = fs_1.default.readFileSync(path_1.default.join(inputs.policy_dir, "repository.yml"), "utf8");
             policy.repo = js_yaml_1.default.load(repoPolicyFile);
         }
-        Logger_1.logger.debug("Policy:");
-        Logger_1.logger.debug(js_yaml_1.default.dump(policy));
+        logger_1.logger.debug("Policy:");
+        logger_1.logger.debug(js_yaml_1.default.dump(policy));
     }
     catch (error) {
-        Logger_1.logger.error("Error loading the policy file. Please check the logs: " + error);
+        logger_1.logger.error("Error loading the policy file. Please check the logs: " + error);
     }
     return policy;
 };

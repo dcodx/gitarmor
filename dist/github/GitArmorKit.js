@@ -26,7 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GitArmorKit = void 0;
 const rest_1 = require("@octokit/rest");
 const dotenv = __importStar(require("dotenv"));
-const Logger_1 = require("../utils/Logger");
+const logger_1 = require("../utils/logger");
 const core_1 = require("@actions/core");
 dotenv.config();
 class GitArmorKit extends rest_1.Octokit {
@@ -38,14 +38,14 @@ class GitArmorKit extends rest_1.Octokit {
                 onRateLimit: (retryAfter, options, octokit) => {
                     octokit.log.warn(`Request quota exhausted for request ${options.method} ${options.url}`);
                     if (options.request.retryCount <= 2) {
-                        Logger_1.logger.debug(`Retrying after ${retryAfter} seconds!`);
+                        logger_1.logger.debug(`Retrying after ${retryAfter} seconds!`);
                         return true;
                     }
                 },
                 onSecondaryRateLimit: (retryAfter, options, octokit) => {
                     octokit.log.warn(`Secondary rate limit for request ${options.method} ${options.url}`);
                     if (options.request.retryCount <= 2) {
-                        Logger_1.logger.debug(`Secondary Limit - Retrying after ${retryAfter} seconds!`);
+                        logger_1.logger.debug(`Secondary Limit - Retrying after ${retryAfter} seconds!`);
                         return true;
                     }
                 },

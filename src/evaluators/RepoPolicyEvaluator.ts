@@ -1,4 +1,4 @@
-import { logger } from "./../utils/Logger";
+import { logger } from "../utils/logger";
 import { RepoPolicy, Repository, CheckResult } from "../types/common/main";
 import { BranchProtectionChecks } from "./repository/BranchProtectionChecks";
 import { GHASChecks } from "./repository/GHASChecks";

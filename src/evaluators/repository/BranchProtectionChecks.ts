@@ -4,7 +4,7 @@ import {
   getRepoBranch,
 } from "../../github/Repositories";
 import { Repository, CheckResult } from "../../types/common/main";
-import { logger } from "../../utils/Logger";
+import { logger } from "../../utils/logger";
 
 export class BranchProtectionChecks {
   private policy: any;

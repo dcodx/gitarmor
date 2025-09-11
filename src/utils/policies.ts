@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
-import { logger } from "./Logger";
+import { logger } from "../utils/logger";
 import { Policy, OrgPolicy, RepoPolicy, Inputs } from "../types/common/main";
 
 export const loadPolicy = async (inputs: Inputs): Promise<Policy> => {

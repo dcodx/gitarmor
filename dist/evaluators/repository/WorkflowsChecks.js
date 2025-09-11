@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkflowsChecks = void 0;
 const Actions_1 = require("../../github/Actions");
-const Logger_1 = require("../../utils/Logger");
+const logger_1 = require("../../utils/logger");
 class WorkflowsChecks {
     policy;
     repository;
@@ -23,12 +23,12 @@ class WorkflowsChecks {
         try {
             const workflowsAccessPermissions = await (0, Actions_1.getRepoWorkflowAccessPermissions)(this.repository.owner, this.repository.name);
             const workflowsAccessPermissionsResult = workflowsAccessPermissions.access_level;
-            Logger_1.logger.debug(`Workflow access permissions result: ${workflowsAccessPermissionsResult}`);
+            logger_1.logger.debug(`Workflow access permissions result: ${workflowsAccessPermissionsResult}`);
             const workflowsAccessPermissionsPolicy = this.policy.workflows.access_level;
             return this.createWorkflowsAccessPermissionsResult(workflowsAccessPermissionsResult == workflowsAccessPermissionsPolicy);
         }
         catch (error) {
-            Logger_1.logger.error(`not available for public repositories`);
+            logger_1.logger.error(`not available for public repositories`);
             return this.createWorkflowsAccessPermissionsResult(false, "not available for public repositories");
         }
     }

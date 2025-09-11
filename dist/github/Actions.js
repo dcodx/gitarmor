@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRepoWorkflowActions = exports.getRepoWorkflows = exports.getRepoWorkflowAccessPermissions = exports.getRepoDefaultWorkflowsPermissions = exports.getRepoSelectedActions = exports.getRepoActionsPermissions = void 0;
 const GitArmorKit_1 = require("./GitArmorKit");
-const Logger_1 = require("../utils/Logger");
+const logger_1 = require("../utils/logger");
 //Get GitHub Actions permissions for a repository
 const getRepoActionsPermissions = async (owner, repo) => {
     try {
@@ -14,7 +14,7 @@ const getRepoActionsPermissions = async (owner, repo) => {
         return response.data;
     }
     catch (error) {
-        Logger_1.logger.error(error.message);
+        logger_1.logger.error(error.message);
         throw error;
     }
 };

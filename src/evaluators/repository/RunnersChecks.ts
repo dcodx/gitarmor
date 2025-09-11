@@ -1,6 +1,6 @@
 import { CheckResult, Repository } from "../../types/common/main";
 import { getRepoRunners } from "../../github/Runners";
-import { logger } from "../../utils/Logger";
+import { logger } from "../../utils/logger";
 
 export class RunnersChecks {
   private policy: any;

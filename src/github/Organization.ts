@@ -1,7 +1,7 @@
 import { Endpoints } from "@octokit/types";
 import { CustomRepositoryRoles } from "../types/common/main";
 import { GitArmorKit } from "./GitArmorKit";
-import { logger } from "../utils/Logger";
+import { logger } from "../utils/logger";
 
 // Get all repositories for an organization
 export const getRepositoriesForOrg = async (

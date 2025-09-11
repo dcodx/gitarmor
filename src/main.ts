@@ -1,6 +1,6 @@
-import { parseInputs } from "./utils/Input";
+import { parseInputs } from "./utils/input";
 import { getRepositoriesForOrg } from "./github/Organization";
-import { logger } from "./utils/Logger";
+import { logger } from "./utils/logger";
 import { RepoPolicyEvaluator } from "./evaluators/RepoPolicyEvaluator";
 import { OrgPolicyEvaluator } from "./evaluators/OrgPolicyEvaluator";
 import { Report } from "./reporting/Report";

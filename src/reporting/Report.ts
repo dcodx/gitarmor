@@ -1,7 +1,7 @@
 import { Policy, Inputs } from "../types/common/main";
 import { OrgPolicyEvaluator } from "../evaluators/OrgPolicyEvaluator";
 import { RepoPolicyEvaluator } from "../evaluators/RepoPolicyEvaluator";
-import { logger } from "./../utils/Logger";
+import { logger } from "../utils/logger";
 import fs from "fs";
 
 export class Report {
