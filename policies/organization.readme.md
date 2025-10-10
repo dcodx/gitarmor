@@ -126,6 +126,29 @@ authentication:
   - `false`: Multi-Factor authentication is not required.
 
 
+## Actions
+
+This policy checks the GitHub Actions permissions for the organization to ensure that actions usage is properly controlled. [GitHub](https://docs.github.com/en/rest/actions/permissions?apiVersion=2022-11-28#get-github-actions-permissions-for-an-organization)
+
+```yml
+actions:
+  enabled_repositories: all # all, none, selected
+  allowed_actions: all # all, local_only, selected
+  sha_pinning_required: true
+```
+
+- `enabled_repositories` (**optional**): specifies which repositories in the organization can use GitHub Actions. The options are:
+  - `all`: all repositories can use GitHub Actions.
+  - `none`: no repositories can use GitHub Actions.
+  - `selected`: only selected repositories can use GitHub Actions.
+
+- `allowed_actions` (**optional**): specifies which actions and reusable workflows can be run. The options are:
+  - `all`: any action or reusable workflow can be used.
+  - `local_only`: only actions and reusable workflows defined in the organization can be used.
+  - `selected`: only selected actions and reusable workflows can be used (additional configuration required).
+
+- `sha_pinning_required` (**optional**): if set to `true`, SHA pinning is required for actions in workflows. When enabled, actions must be referenced by their full commit SHA rather than by tag or branch. This improves security by ensuring that the exact version of an action is used and preventing potential supply chain attacks.
+
 
 ## GHAS (Github Advanced Security)
 

@@ -59,6 +59,7 @@ allowed_actions:
     patterns_allowed:
       - "veracode/*"
       - "dcodx/*"
+  sha_pinning_required: true
      
 workflows:
   permission: read # read, write

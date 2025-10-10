@@ -28,6 +28,12 @@ member_privileges:
 authentication:
   mfa_required: true
 
+# Actions
+actions:
+  enabled_repositories: all # all, none, selected
+  allowed_actions: all # all, local_only, selected
+  sha_pinning_required: true
+
 # Advanced Security
 advanced_security:
   automatic_dependency_graph: true

@@ -79,6 +79,7 @@ interface AllowedActions {
     verified_allowed: boolean;
     patterns_allowed: string[];
   };
+  sha_pinning_required?: boolean;
 }
 
 interface Workflows {
@@ -168,6 +169,11 @@ interface OrgPolicy {
   member_privileges: MemberPrivileges;
   authentication: Authentication;
   advanced_security: AdvancedSecurity;
+  actions?: {
+    enabled_repositories?: string;
+    allowed_actions?: string;
+    sha_pinning_required?: boolean;
+  };
 }
 
 // Generic Check Result

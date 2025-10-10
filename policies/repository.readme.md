@@ -75,6 +75,7 @@ allowed_actions:
     patterns_allowed:
       - "veracode/*"
       - "dcodx/*"
+  sha_pinning_required: true
 ```
     
 `permission` can have the following values: 
@@ -91,6 +92,8 @@ When `permission` is set to `selected`, the following options are available:
 - `patterns_allowed` (**mandatory**): a list of patterns that can be used to only allow specific actions. The patterns in the policy must match the patterns in the GitHub settings to make the check successful.
 
 When `permission` is set to `local_only`, `all` or `none`, the `selected` section is ignored.
+
+`sha_pinning_required` (**optional**): if set to `true`, SHA pinning is required for actions in workflows. When enabled, actions must be referenced by their full commit SHA rather than by tag or branch. This improves security by ensuring that the exact version of an action is used and preventing potential supply chain attacks.
 
 ## GHAS (GitHub Advanced Security) 
 
