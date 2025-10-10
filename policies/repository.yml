@@ -40,6 +40,15 @@ file_exists:
   - README.md
   - SECURITY.md
 
+file_disallow:
+  - .env
+  - .env.local
+  - .env.production
+  - .env.development
+  - config.xml
+  - credentials.json
+  - secrets.yml
+
 
 advanced_security:
   ghas: true

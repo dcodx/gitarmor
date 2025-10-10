@@ -6,6 +6,7 @@ const BranchProtectionChecks_1 = require("./repository/BranchProtectionChecks");
 const GHASChecks_1 = require("./repository/GHASChecks");
 const Repositories_1 = require("../github/Repositories");
 const FilesExistChecks_1 = require("./multipurpose/FilesExistChecks");
+const FilesDisallowChecks_1 = require("./multipurpose/FilesDisallowChecks");
 const ActionsChecks_1 = require("./repository/ActionsChecks");
 const WorkflowsChecks_1 = require("./repository/WorkflowsChecks");
 const RunnersChecks_1 = require("./repository/RunnersChecks");
@@ -45,6 +46,12 @@ class RepoPolicyEvaluator {
             const files_exist = await new FilesExistChecks_1.FilesExistChecks(this.repository, this.policy).checkFilesExist();
             logger_1.logger.debug(`Files exists results: ${JSON.stringify(files_exist)}`);
             this.repositoryCheckResults.push(files_exist);
+        }
+        // Check the files disallow policy rule
+        if (this.policy.file_disallow && this.policy.file_disallow.length > 0) {
+            const files_disallow = await new FilesDisallowChecks_1.FilesDisallowChecks(this.repository, this.policy).checkFilesDisallow();
+            logger_1.logger.debug(`Files disallow results: ${JSON.stringify(files_disallow)}`);
+            this.repositoryCheckResults.push(files_disallow);
         }
         //Run the GHAS checks
         if (this.policy.advanced_security) {

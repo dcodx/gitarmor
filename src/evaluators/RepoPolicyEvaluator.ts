@@ -4,6 +4,7 @@ import { BranchProtectionChecks } from "./repository/BranchProtectionChecks";
 import { GHASChecks } from "./repository/GHASChecks";
 import { getRepository } from "../github/Repositories";
 import { FilesExistChecks } from "./multipurpose/FilesExistChecks";
+import { FilesDisallowChecks } from "./multipurpose/FilesDisallowChecks";
 import { ActionsChecks } from "./repository/ActionsChecks";
 import { WorkflowsChecks } from "./repository/WorkflowsChecks";
 import { RunnersChecks } from "./repository/RunnersChecks";
@@ -74,6 +75,16 @@ export class RepoPolicyEvaluator {
       ).checkFilesExist();
       logger.debug(`Files exists results: ${JSON.stringify(files_exist)}`);
       this.repositoryCheckResults.push(files_exist);
+    }
+
+    // Check the files disallow policy rule
+    if (this.policy.file_disallow && this.policy.file_disallow.length > 0) {
+      const files_disallow = await new FilesDisallowChecks(
+        this.repository,
+        this.policy,
+      ).checkFilesDisallow();
+      logger.debug(`Files disallow results: ${JSON.stringify(files_disallow)}`);
+      this.repositoryCheckResults.push(files_disallow);
     }
 
     //Run the GHAS checks
