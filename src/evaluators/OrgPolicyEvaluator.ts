@@ -6,6 +6,10 @@ import { OrgCustomRolesChecks } from "./organization/OrgCustomRolesChecks";
 import { OrgActionsChecks } from "./organization/OrgActionsChecks";
 import { getOrganization } from "../github/Organization";
 import { PrivilegesChecks } from "./organization/PrivilegesChecks";
+import {
+  printEnhancedCheckResult,
+  printResultsHeader,
+} from "../utils/outputFormatter";
 
 export class OrgPolicyEvaluator {
   public policy: OrgPolicy;
@@ -91,19 +95,11 @@ export class OrgPolicyEvaluator {
   }
 
   public printCheckResults() {
-    logger.info(
-      "------------------------------------------------------------------------",
-    );
-    logger.info(`Organization policy results - ${this.organization.name}:`);
-    logger.info(
-      "------------------------------------------------------------------------",
+    printResultsHeader(
+      `Organization Policy Results - ${this.organization.name}`,
     );
     this.orgCheckResults.forEach((checkResult) => {
-      const emoji =
-        checkResult.pass === null ? "😐" : checkResult.pass ? "✅" : "❌";
-      logger.info(
-        `[${emoji}] Check: ${checkResult.name} - Pass: ${checkResult.pass} \n${JSON.stringify(checkResult.data, null, 3)}`,
-      );
+      printEnhancedCheckResult(checkResult, true);
     });
   }
 

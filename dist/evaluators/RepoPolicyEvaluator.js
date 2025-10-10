@@ -12,6 +12,7 @@ const WorkflowsChecks_1 = require("./repository/WorkflowsChecks");
 const RunnersChecks_1 = require("./repository/RunnersChecks");
 const WebHooksChecks_1 = require("./repository/WebHooksChecks");
 const AdminsChecks_1 = require("./repository/AdminsChecks");
+const outputFormatter_1 = require("../utils/outputFormatter");
 // This class is the main Repository evaluator. It evaluates the policy for a given repository.
 class RepoPolicyEvaluator {
     policy; // The policy to be evaluated loaded later. This is always the repo policy
@@ -93,12 +94,9 @@ class RepoPolicyEvaluator {
     }
     // Run webhook checks
     printCheckResults() {
-        logger_1.logger.info("------------------------------------------------------------------------");
-        logger_1.logger.info(`Repository policy results - ${this.getFullRepositoryName()}:`);
-        logger_1.logger.info("------------------------------------------------------------------------");
+        (0, outputFormatter_1.printResultsHeader)(`Repository Policy Results - ${this.getFullRepositoryName()}`);
         this.repositoryCheckResults.forEach((checkResult) => {
-            const emoji = checkResult.pass === null ? "😐" : checkResult.pass ? "✅" : "❌";
-            logger_1.logger.info(`[${emoji}] Check: ${checkResult.name} - Pass: ${checkResult.pass} \n${JSON.stringify(checkResult.data, null, 3)}`);
+            (0, outputFormatter_1.printEnhancedCheckResult)(checkResult, false);
         });
     }
     getFullRepositoryName() {
