@@ -141,6 +141,36 @@ webhooks:
   - Endpoint compromise
 
 
+### Sensitive files committed to the repository
+
+Developers may accidentally commit sensitive files containing credentials, API keys, passwords, or other confidential information to the repository. Files like `.env`, configuration files, or credential files can expose the application and infrastructure to unauthorized access.
+
+#### Security controls
+- Define a list of file patterns that should never be committed to the repository
+- Verify these files are listed in `.gitignore` to prevent accidental commits
+- Regularly scan the repository for sensitive files that may have been committed
+
+#### Gitarmor policy configuration
+```yml
+file_disallow:
+  - .env
+  - .env.local
+  - .env.production
+  - .env.development
+  - config.xml
+  - credentials.json
+  - secrets.yml
+```
+
+#### SLSA.dev threats
+- [(E) Compromise source repo](https://slsa.dev/spec/v1.0/threats) - Exposed credentials can be used to compromise the source repository
+
+#### MS DevOps threat matrix
+- [5. Credential Access](https://www.microsoft.com/en-us/security/blog/2023/04/06/devops-threat-matrix/)
+  - Exposed secrets in repository
+  - Credential leakage
+
+
 ### Malicious or vulnerable dependencies in the repository
 
 A malicious actor could exploit a malicious or vulnerable dependency in the repository, which could be used to compromise the application, exfiltrate data, or attack other systems in the network.

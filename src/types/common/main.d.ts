@@ -115,6 +115,7 @@ interface WebHookConfig {
 interface RepoPolicy {
   protected_branches: ProtectedBranch[];
   file_exists: string[];
+  file_disallow: string[];
   advanced_security: AdvancedSecurity;
   allowed_actions: AllowedActions;
   workflows: Workflows;

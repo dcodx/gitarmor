@@ -61,6 +61,38 @@ protected_branches:
 - `allow_fork_syncing`: if set to `true`, the branch can be synced with the upstream repository.
 
 
+## File Disallow
+
+The `file_disallow` policy checks if sensitive files that should not be present in the repository are found. This helps prevent accidental commits of credentials, API keys, and other sensitive information.
+
+[GitHub Gitignore Reference](https://github.com/github/gitignore)
+
+```yml
+file_disallow:
+  - .env
+  - .env.local
+  - .env.production
+  - .env.development
+  - config.xml
+  - credentials.json
+  - secrets.yml
+```
+
+The policy will:
+1. Check if any of the specified files exist in the repository
+2. Verify if disallowed files are properly listed in `.gitignore`
+3. Report which files are found and which ones are missing from `.gitignore`
+
+`file_disallow` is a list of file paths (relative to repository root) that should not exist in the repository. Common examples include:
+
+- `.env` and variants (`.env.local`, `.env.production`, etc.) - Environment variable files often containing credentials
+- `config.xml`, `credentials.json` - Configuration files that may contain sensitive data
+- `secrets.yml` - Secret management files
+- Any other files that typically contain API tokens, passwords, or sensitive information
+
+**Best Practice**: All files listed in `file_disallow` should also be added to `.gitignore` to prevent accidental commits.
+
+
 ## Actions 
 
 ### Permissions
