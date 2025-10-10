@@ -51,7 +51,7 @@ advanced_security:
   dependabot_version_updates: true
   code_scanning: true
 
-allowed_actions:
+actions:
   permission: selected # all, local_only, selected, none
   selected:
     github_owned_allowed: true

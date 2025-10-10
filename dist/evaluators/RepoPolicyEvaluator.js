@@ -54,7 +54,7 @@ class RepoPolicyEvaluator {
             this.repositoryCheckResults.push(ghas_checks);
         }
         //Run Actions checks
-        if (this.policy.allowed_actions) {
+        if (this.policy.actions) {
             const actions_checks = await new ActionsChecks_1.ActionsChecks(this.policy, this.repository).checkActionsPermissions();
             logger_1.logger.debug(`Action checks results: ${JSON.stringify(actions_checks)}`);
             this.repositoryCheckResults.push(actions_checks);

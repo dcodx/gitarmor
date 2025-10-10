@@ -67,7 +67,7 @@ protected_branches:
 The policy checks the actions permissions for the specified repository. 
 
 ```yml
-allowed_actions:
+actions:
   permission: local_only
   selected:
     github_owned_allowed: true

@@ -24,10 +24,9 @@ export class ActionsChecks {
 
     const actionsPermissionsResult = actionsPermissions.enabled;
     const actionsPermissionsAllowedActions = actionsPermissions.allowed_actions;
-    const actionsPermissionsPolicy = this.policy.allowed_actions.permission;
+    const actionsPermissionsPolicy = this.policy.actions.permission;
     const shaPinningRequired = (actionsPermissions as any).sha_pinning_required;
-    const shaPinningRequiredPolicy =
-      this.policy.allowed_actions.sha_pinning_required;
+    const shaPinningRequiredPolicy = this.policy.actions.sha_pinning_required;
 
     if (!actionsPermissionsResult) {
       return this.createResult(
@@ -41,7 +40,7 @@ export class ActionsChecks {
 
     switch (actionsPermissionsPolicy) {
       case "selected":
-        if (!this.policy.allowed_actions.selected.patterns_allowed) {
+        if (!this.policy.actions.selected.patterns_allowed) {
           logger.error(
             "error: the policy (.yml) should have the list of patterns_allowed when permission is 'selected'",
           );
@@ -72,15 +71,13 @@ export class ActionsChecks {
 
         const selectedActionsAllowed = selectedActions.patterns_allowed.every(
           (action: string) =>
-            this.policy.allowed_actions.selected.patterns_allowed.includes(
-              action,
-            ),
+            this.policy.actions.selected.patterns_allowed.includes(action),
         );
         const githubOwnedAllowedMatchesPolicy =
-          this.policy.allowed_actions.selected.github_owned_allowed ===
+          this.policy.actions.selected.github_owned_allowed ===
           githubOwnedAllowedActions;
         const verifiedAllowedMatchesPolicy =
-          this.policy.allowed_actions.selected.verified_allowed ===
+          this.policy.actions.selected.verified_allowed ===
           verifiedAllowedActions;
 
         return this.createResultSelected(
@@ -89,7 +86,7 @@ export class ActionsChecks {
           githubOwnedAllowedMatchesPolicy,
           verifiedAllowedMatchesPolicy,
           patternsAllowedActions,
-          this.policy.allowed_actions.selected.patterns_allowed,
+          this.policy.actions.selected.patterns_allowed,
           shaPinningRequired,
           shaPinningRequiredPolicy,
         );

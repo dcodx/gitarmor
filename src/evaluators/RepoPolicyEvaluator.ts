@@ -89,7 +89,7 @@ export class RepoPolicyEvaluator {
     }
 
     //Run Actions checks
-    if (this.policy.allowed_actions) {
+    if (this.policy.actions) {
       const actions_checks = await new ActionsChecks(
         this.policy,
         this.repository,

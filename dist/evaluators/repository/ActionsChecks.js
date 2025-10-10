@@ -15,15 +15,15 @@ class ActionsChecks {
         const actionsPermissions = await (0, Actions_1.getRepoActionsPermissions)(this.repository.owner, this.repository.name);
         const actionsPermissionsResult = actionsPermissions.enabled;
         const actionsPermissionsAllowedActions = actionsPermissions.allowed_actions;
-        const actionsPermissionsPolicy = this.policy.allowed_actions.permission;
+        const actionsPermissionsPolicy = this.policy.actions.permission;
         const shaPinningRequired = actionsPermissions.sha_pinning_required;
-        const shaPinningRequiredPolicy = this.policy.allowed_actions.sha_pinning_required;
+        const shaPinningRequiredPolicy = this.policy.actions.sha_pinning_required;
         if (!actionsPermissionsResult) {
             return this.createResult(actionsPermissionsPolicy === "none", "none", actionsPermissionsPolicy, shaPinningRequired, shaPinningRequiredPolicy);
         }
         switch (actionsPermissionsPolicy) {
             case "selected":
-                if (!this.policy.allowed_actions.selected.patterns_allowed) {
+                if (!this.policy.actions.selected.patterns_allowed) {
                     logger_1.logger.error("error: the policy (.yml) should have the list of patterns_allowed when permission is 'selected'");
                     return this.createResult(false, actionsPermissionsAllowedActions, actionsPermissionsPolicy, shaPinningRequired, shaPinningRequiredPolicy);
                 }
@@ -33,12 +33,12 @@ class ActionsChecks {
                 const githubOwnedAllowedActions = selectedActions.github_owned_allowed;
                 const verifiedAllowedActions = selectedActions.verified_allowed;
                 const patternsAllowedActions = selectedActions.patterns_allowed;
-                const selectedActionsAllowed = selectedActions.patterns_allowed.every((action) => this.policy.allowed_actions.selected.patterns_allowed.includes(action));
-                const githubOwnedAllowedMatchesPolicy = this.policy.allowed_actions.selected.github_owned_allowed ===
+                const selectedActionsAllowed = selectedActions.patterns_allowed.every((action) => this.policy.actions.selected.patterns_allowed.includes(action));
+                const githubOwnedAllowedMatchesPolicy = this.policy.actions.selected.github_owned_allowed ===
                     githubOwnedAllowedActions;
-                const verifiedAllowedMatchesPolicy = this.policy.allowed_actions.selected.verified_allowed ===
+                const verifiedAllowedMatchesPolicy = this.policy.actions.selected.verified_allowed ===
                     verifiedAllowedActions;
-                return this.createResultSelected(selectedActionsAllowed, actionsPermissionsAllowedActions, githubOwnedAllowedMatchesPolicy, verifiedAllowedMatchesPolicy, patternsAllowedActions, this.policy.allowed_actions.selected.patterns_allowed, shaPinningRequired, shaPinningRequiredPolicy);
+                return this.createResultSelected(selectedActionsAllowed, actionsPermissionsAllowedActions, githubOwnedAllowedMatchesPolicy, verifiedAllowedMatchesPolicy, patternsAllowedActions, this.policy.actions.selected.patterns_allowed, shaPinningRequired, shaPinningRequiredPolicy);
             case "all":
             case "local_only":
             case "none":

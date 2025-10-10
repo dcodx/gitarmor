@@ -72,7 +72,7 @@ interface AdvancedSecurity {
   code_scanning: boolean;
 }
 
-interface AllowedActions {
+interface Actions {
   permission: string;
   selected: {
     github_owned_allowed: boolean;
@@ -117,7 +117,7 @@ interface RepoPolicy {
   protected_branches: ProtectedBranch[];
   file_exists: string[];
   advanced_security: AdvancedSecurity;
-  allowed_actions: AllowedActions;
+  actions: Actions;
   workflows: Workflows;
   runners: Runners;
   webhooks: WebHook;
