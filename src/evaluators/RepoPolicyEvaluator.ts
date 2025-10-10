@@ -8,6 +8,7 @@ import { ActionsChecks } from "./repository/ActionsChecks";
 import { WorkflowsChecks } from "./repository/WorkflowsChecks";
 import { RunnersChecks } from "./repository/RunnersChecks";
 import { WebHooksChecks } from "./repository/WebHooksChecks";
+import { AdminsChecks } from "./repository/AdminsChecks";
 
 // This class is the main Repository evaluator. It evaluates the policy for a given repository.
 export class RepoPolicyEvaluator {
@@ -133,6 +134,15 @@ export class RepoPolicyEvaluator {
       ).checkWebHooks();
       logger.debug(`Webhook checks results: ${JSON.stringify(webhook_checks)}`);
       this.repositoryCheckResults.push(webhook_checks);
+    }
+
+    if (this.policy.admins) {
+      const admins_checks = await new AdminsChecks(
+        this.policy,
+        this.repository,
+      ).checkAdmins();
+      logger.debug(`Admins checks results: ${JSON.stringify(admins_checks)}`);
+      this.repositoryCheckResults.push(admins_checks);
     }
   }
 

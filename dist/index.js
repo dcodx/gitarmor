@@ -47878,6 +47878,7 @@ const ActionsChecks_1 = __nccwpck_require__(1635);
 const WorkflowsChecks_1 = __nccwpck_require__(8336);
 const RunnersChecks_1 = __nccwpck_require__(9863);
 const WebHooksChecks_1 = __nccwpck_require__(1149);
+const AdminsChecks_1 = __nccwpck_require__(2818);
 // This class is the main Repository evaluator. It evaluates the policy for a given repository.
 class RepoPolicyEvaluator {
     policy; // The policy to be evaluated loaded later. This is always the repo policy
@@ -47944,6 +47945,11 @@ class RepoPolicyEvaluator {
             const webhook_checks = await new WebHooksChecks_1.WebHooksChecks(this.policy, this.repository).checkWebHooks();
             logger_1.logger.debug(`Webhook checks results: ${JSON.stringify(webhook_checks)}`);
             this.repositoryCheckResults.push(webhook_checks);
+        }
+        if (this.policy.admins) {
+            const admins_checks = await new AdminsChecks_1.AdminsChecks(this.policy, this.repository).checkAdmins();
+            logger_1.logger.debug(`Admins checks results: ${JSON.stringify(admins_checks)}`);
+            this.repositoryCheckResults.push(admins_checks);
         }
     }
     // Run webhook checks
@@ -48404,6 +48410,62 @@ class ActionsChecks {
     }
 }
 exports.ActionsChecks = ActionsChecks;
+
+
+/***/ }),
+
+/***/ 2818:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AdminsChecks = void 0;
+const Repositories_1 = __nccwpck_require__(3354);
+class AdminsChecks {
+    policy;
+    repository;
+    constructor(policy, repository) {
+        this.policy = policy;
+        this.repository = repository;
+    }
+    // check whether the repository admins match the policy
+    async checkAdmins() {
+        const collaborators = await (0, Repositories_1.getRepoCollaborators)(this.repository.owner, this.repository.name);
+        // Filter collaborators to get only admins
+        const actualAdmins = collaborators
+            .filter((collaborator) => collaborator.permissions?.admin)
+            .map((collaborator) => collaborator.login);
+        const policyAdmins = this.policy.admins || [];
+        // Find admins in policy that are not in the repository
+        const missingAdmins = policyAdmins.filter((admin) => !actualAdmins.includes(admin));
+        // Find admins in the repository that are not in the policy
+        const extraAdmins = actualAdmins.filter((admin) => !policyAdmins.includes(admin));
+        return this.createResult(policyAdmins, actualAdmins, missingAdmins, extraAdmins);
+    }
+    createResult(policy_admins, actual_admins, missing_admins, extra_admins) {
+        let name = "Admins Check";
+        let pass = false;
+        let data = {};
+        if (missing_admins.length === 0 && extra_admins.length === 0) {
+            pass = true;
+            data = {
+                policy_admins,
+                actual_admins,
+            };
+        }
+        else {
+            data = {
+                policy_admins,
+                actual_admins,
+                missing_admins,
+                extra_admins,
+            };
+        }
+        return { name, pass, data };
+    }
+}
+exports.AdminsChecks = AdminsChecks;
 
 
 /***/ }),
