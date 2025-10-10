@@ -2,6 +2,27 @@ import { Endpoints } from "@octokit/types";
 import { GitArmorKit } from "./GitArmorKit";
 import { logger } from "../utils/logger";
 
+//Get GitHub Actions permissions for an organization
+export const getOrgActionsPermissions = async (
+  org: string,
+): Promise<
+  Endpoints["GET /orgs/{org}/actions/permissions"]["response"]["data"]
+> => {
+  try {
+    const octokit = new GitArmorKit();
+
+    const response: Endpoints["GET /orgs/{org}/actions/permissions"]["response"] =
+      await octokit.rest.actions.getGithubActionsPermissionsOrganization({
+        org: org,
+      });
+
+    return response.data;
+  } catch (error) {
+    logger.error(error.message);
+    throw error;
+  }
+};
+
 //Get GitHub Actions permissions for a repository
 export const getRepoActionsPermissions = async (
   owner: string,

@@ -24,19 +24,23 @@ export class ActionsChecks {
 
     const actionsPermissionsResult = actionsPermissions.enabled;
     const actionsPermissionsAllowedActions = actionsPermissions.allowed_actions;
-    const actionsPermissionsPolicy = this.policy.allowed_actions.permission;
+    const actionsPermissionsPolicy = this.policy.actions.permission;
+    const shaPinningRequired = (actionsPermissions as any).sha_pinning_required;
+    const shaPinningRequiredPolicy = this.policy.actions.sha_pinning_required;
 
     if (!actionsPermissionsResult) {
       return this.createResult(
         actionsPermissionsPolicy === "none",
         "none",
         actionsPermissionsPolicy,
+        shaPinningRequired,
+        shaPinningRequiredPolicy,
       );
     }
 
     switch (actionsPermissionsPolicy) {
       case "selected":
-        if (!this.policy.allowed_actions.selected.patterns_allowed) {
+        if (!this.policy.actions.selected.patterns_allowed) {
           logger.error(
             "error: the policy (.yml) should have the list of patterns_allowed when permission is 'selected'",
           );
@@ -44,6 +48,8 @@ export class ActionsChecks {
             false,
             actionsPermissionsAllowedActions,
             actionsPermissionsPolicy,
+            shaPinningRequired,
+            shaPinningRequiredPolicy,
           );
         }
         if (actionsPermissionsAllowedActions !== "selected")
@@ -51,6 +57,8 @@ export class ActionsChecks {
             false,
             actionsPermissionsAllowedActions,
             actionsPermissionsPolicy,
+            shaPinningRequired,
+            shaPinningRequiredPolicy,
           );
 
         const selectedActions = await getRepoSelectedActions(
@@ -63,15 +71,13 @@ export class ActionsChecks {
 
         const selectedActionsAllowed = selectedActions.patterns_allowed.every(
           (action: string) =>
-            this.policy.allowed_actions.selected.patterns_allowed.includes(
-              action,
-            ),
+            this.policy.actions.selected.patterns_allowed.includes(action),
         );
         const githubOwnedAllowedMatchesPolicy =
-          this.policy.allowed_actions.selected.github_owned_allowed ===
+          this.policy.actions.selected.github_owned_allowed ===
           githubOwnedAllowedActions;
         const verifiedAllowedMatchesPolicy =
-          this.policy.allowed_actions.selected.verified_allowed ===
+          this.policy.actions.selected.verified_allowed ===
           verifiedAllowedActions;
 
         return this.createResultSelected(
@@ -80,7 +86,9 @@ export class ActionsChecks {
           githubOwnedAllowedMatchesPolicy,
           verifiedAllowedMatchesPolicy,
           patternsAllowedActions,
-          this.policy.allowed_actions.selected.patterns_allowed,
+          this.policy.actions.selected.patterns_allowed,
+          shaPinningRequired,
+          shaPinningRequiredPolicy,
         );
       case "all":
       case "local_only":
@@ -89,6 +97,8 @@ export class ActionsChecks {
           actionsPermissionsPolicy === actionsPermissionsAllowedActions,
           actionsPermissionsAllowedActions,
           actionsPermissionsPolicy,
+          shaPinningRequired,
+          shaPinningRequiredPolicy,
         );
       default:
         logger.error(
@@ -101,23 +111,34 @@ export class ActionsChecks {
     actions_permissions: boolean,
     github_allowed_actions?: string,
     policy_allowed_actions?: string,
+    sha_pinning_required?: boolean,
+    sha_pinning_required_policy?: boolean,
   ): CheckResult {
     let name = "Actions Check";
     let pass = false;
     let data = {};
 
-    if (actions_permissions) {
+    // Check sha_pinning_required if it's defined in the policy
+    const shaPinningMatches =
+      sha_pinning_required_policy === undefined ||
+      sha_pinning_required === sha_pinning_required_policy;
+
+    if (actions_permissions && shaPinningMatches) {
       pass = true;
       data = {
         actions_permissions,
         github_allowed_actions,
         policy_allowed_actions,
+        sha_pinning_required,
+        sha_pinning_required_policy,
       };
     } else {
       data = {
         actions_permissions,
         github_allowed_actions,
         policy_allowed_actions,
+        sha_pinning_required,
+        sha_pinning_required_policy,
       };
     }
 
@@ -131,12 +152,24 @@ export class ActionsChecks {
     verified_allowed: boolean,
     patterns_allowed_github: string[],
     patterns_allowed_policy: string[],
+    sha_pinning_required?: boolean,
+    sha_pinning_required_policy?: boolean,
   ) {
     let name = "Actions Check";
     let pass = false;
     let data = {};
 
-    if (actions_permissions && github_owned_allowed && verified_allowed) {
+    // Check sha_pinning_required if it's defined in the policy
+    const shaPinningMatches =
+      sha_pinning_required_policy === undefined ||
+      sha_pinning_required === sha_pinning_required_policy;
+
+    if (
+      actions_permissions &&
+      github_owned_allowed &&
+      verified_allowed &&
+      shaPinningMatches
+    ) {
       pass = true;
       data = {
         actions_permissions,
@@ -145,6 +178,8 @@ export class ActionsChecks {
         verified_allowed,
         patterns_allowed_github,
         patterns_allowed_policy,
+        sha_pinning_required,
+        sha_pinning_required_policy,
       };
     } else {
       data = {
@@ -154,6 +189,8 @@ export class ActionsChecks {
         verified_allowed,
         patterns_allowed_github,
         patterns_allowed_policy,
+        sha_pinning_required,
+        sha_pinning_required_policy,
       };
     }
 

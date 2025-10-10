@@ -1,8 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRepoWorkflowActions = exports.getRepoWorkflows = exports.getRepoWorkflowAccessPermissions = exports.getRepoDefaultWorkflowsPermissions = exports.getRepoSelectedActions = exports.getRepoActionsPermissions = void 0;
+exports.getRepoWorkflowActions = exports.getRepoWorkflows = exports.getRepoWorkflowAccessPermissions = exports.getRepoDefaultWorkflowsPermissions = exports.getRepoSelectedActions = exports.getRepoActionsPermissions = exports.getOrgActionsPermissions = void 0;
 const GitArmorKit_1 = require("./GitArmorKit");
 const logger_1 = require("../utils/logger");
+//Get GitHub Actions permissions for an organization
+const getOrgActionsPermissions = async (org) => {
+    try {
+        const octokit = new GitArmorKit_1.GitArmorKit();
+        const response = await octokit.rest.actions.getGithubActionsPermissionsOrganization({
+            org: org,
+        });
+        return response.data;
+    }
+    catch (error) {
+        logger_1.logger.error(error.message);
+        throw error;
+    }
+};
+exports.getOrgActionsPermissions = getOrgActionsPermissions;
 //Get GitHub Actions permissions for a repository
 const getRepoActionsPermissions = async (owner, repo) => {
     try {

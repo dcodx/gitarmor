@@ -47797,6 +47797,7 @@ const logger_1 = __nccwpck_require__(8836);
 const OrgGHASChecks_1 = __nccwpck_require__(7137);
 const OrgAuthenticationChecks_1 = __nccwpck_require__(7124);
 const OrgCustomRolesChecks_1 = __nccwpck_require__(8731);
+const OrgActionsChecks_1 = __nccwpck_require__(9582);
 const Organization_1 = __nccwpck_require__(7155);
 const PrivilegesChecks_1 = __nccwpck_require__(3922);
 class OrgPolicyEvaluator {
@@ -47839,6 +47840,12 @@ class OrgPolicyEvaluator {
             const custom_roles_checks = await new OrgCustomRolesChecks_1.OrgCustomRolesChecks(this.policy, this.organization, this.organization.data).evaluate();
             logger_1.logger.debug(`Org Custom Roles results: ${JSON.stringify(custom_roles_checks)}`);
             this.orgCheckResults.push(custom_roles_checks);
+        }
+        // check organization actions settings
+        if (this.policy.actions) {
+            const actions_checks = await new OrgActionsChecks_1.OrgActionsChecks(this.policy, this.organization).evaluate();
+            logger_1.logger.debug(`Org Actions results: ${JSON.stringify(actions_checks)}`);
+            this.orgCheckResults.push(actions_checks);
         }
     }
     printCheckResults() {
@@ -47929,7 +47936,7 @@ class RepoPolicyEvaluator {
             this.repositoryCheckResults.push(ghas_checks);
         }
         //Run Actions checks
-        if (this.policy.allowed_actions) {
+        if (this.policy.actions) {
             const actions_checks = await new ActionsChecks_1.ActionsChecks(this.policy, this.repository).checkActionsPermissions();
             logger_1.logger.debug(`Action checks results: ${JSON.stringify(actions_checks)}`);
             this.repositoryCheckResults.push(actions_checks);
@@ -48122,6 +48129,66 @@ class FilesExistChecks {
     }
 }
 exports.FilesExistChecks = FilesExistChecks;
+
+
+/***/ }),
+
+/***/ 9582:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.OrgActionsChecks = void 0;
+const Actions_1 = __nccwpck_require__(5248);
+class OrgActionsChecks {
+    policy;
+    organization;
+    constructor(policy, organization) {
+        this.policy = policy;
+        this.organization = organization;
+    }
+    async evaluate() {
+        const actionsPermissions = await (0, Actions_1.getOrgActionsPermissions)(this.organization.name);
+        const checks = {
+            enabled_repositories: this.checkEnabledRepositories(actionsPermissions.enabled_repositories),
+            allowed_actions: this.checkAllowedActions(actionsPermissions.allowed_actions),
+            sha_pinning_required: this.checkShaPinningRequired(actionsPermissions.sha_pinning_required),
+        };
+        const name = "Org Actions Checks";
+        const pass = Object.values(checks).every((check) => check === true);
+        const data = {
+            enabled_repositories_github: actionsPermissions.enabled_repositories,
+            enabled_repositories_policy: this.policy.actions.enabled_repositories,
+            allowed_actions_github: actionsPermissions.allowed_actions,
+            allowed_actions_policy: this.policy.actions.allowed_actions,
+            sha_pinning_required_github: actionsPermissions
+                .sha_pinning_required,
+            sha_pinning_required_policy: this.policy.actions.sha_pinning_required,
+            ...checks,
+        };
+        return { name, pass, data };
+    }
+    checkEnabledRepositories(githubValue) {
+        if (this.policy.actions.enabled_repositories === undefined) {
+            return true;
+        }
+        return githubValue === this.policy.actions.enabled_repositories;
+    }
+    checkAllowedActions(githubValue) {
+        if (this.policy.actions.allowed_actions === undefined) {
+            return true;
+        }
+        return githubValue === this.policy.actions.allowed_actions;
+    }
+    checkShaPinningRequired(githubValue) {
+        if (this.policy.actions.sha_pinning_required === undefined) {
+            return true;
+        }
+        return githubValue === this.policy.actions.sha_pinning_required;
+    }
+}
+exports.OrgActionsChecks = OrgActionsChecks;
 
 
 /***/ }),
@@ -48421,46 +48488,53 @@ class ActionsChecks {
         const actionsPermissions = await (0, Actions_1.getRepoActionsPermissions)(this.repository.owner, this.repository.name);
         const actionsPermissionsResult = actionsPermissions.enabled;
         const actionsPermissionsAllowedActions = actionsPermissions.allowed_actions;
-        const actionsPermissionsPolicy = this.policy.allowed_actions.permission;
+        const actionsPermissionsPolicy = this.policy.actions.permission;
+        const shaPinningRequired = actionsPermissions.sha_pinning_required;
+        const shaPinningRequiredPolicy = this.policy.actions.sha_pinning_required;
         if (!actionsPermissionsResult) {
-            return this.createResult(actionsPermissionsPolicy === "none", "none", actionsPermissionsPolicy);
+            return this.createResult(actionsPermissionsPolicy === "none", "none", actionsPermissionsPolicy, shaPinningRequired, shaPinningRequiredPolicy);
         }
         switch (actionsPermissionsPolicy) {
             case "selected":
-                if (!this.policy.allowed_actions.selected.patterns_allowed) {
+                if (!this.policy.actions.selected.patterns_allowed) {
                     logger_1.logger.error("error: the policy (.yml) should have the list of patterns_allowed when permission is 'selected'");
-                    return this.createResult(false, actionsPermissionsAllowedActions, actionsPermissionsPolicy);
+                    return this.createResult(false, actionsPermissionsAllowedActions, actionsPermissionsPolicy, shaPinningRequired, shaPinningRequiredPolicy);
                 }
                 if (actionsPermissionsAllowedActions !== "selected")
-                    return this.createResult(false, actionsPermissionsAllowedActions, actionsPermissionsPolicy);
+                    return this.createResult(false, actionsPermissionsAllowedActions, actionsPermissionsPolicy, shaPinningRequired, shaPinningRequiredPolicy);
                 const selectedActions = await (0, Actions_1.getRepoSelectedActions)(this.repository.owner, this.repository.name);
                 const githubOwnedAllowedActions = selectedActions.github_owned_allowed;
                 const verifiedAllowedActions = selectedActions.verified_allowed;
                 const patternsAllowedActions = selectedActions.patterns_allowed;
-                const selectedActionsAllowed = selectedActions.patterns_allowed.every((action) => this.policy.allowed_actions.selected.patterns_allowed.includes(action));
-                const githubOwnedAllowedMatchesPolicy = this.policy.allowed_actions.selected.github_owned_allowed ===
+                const selectedActionsAllowed = selectedActions.patterns_allowed.every((action) => this.policy.actions.selected.patterns_allowed.includes(action));
+                const githubOwnedAllowedMatchesPolicy = this.policy.actions.selected.github_owned_allowed ===
                     githubOwnedAllowedActions;
-                const verifiedAllowedMatchesPolicy = this.policy.allowed_actions.selected.verified_allowed ===
+                const verifiedAllowedMatchesPolicy = this.policy.actions.selected.verified_allowed ===
                     verifiedAllowedActions;
-                return this.createResultSelected(selectedActionsAllowed, actionsPermissionsAllowedActions, githubOwnedAllowedMatchesPolicy, verifiedAllowedMatchesPolicy, patternsAllowedActions, this.policy.allowed_actions.selected.patterns_allowed);
+                return this.createResultSelected(selectedActionsAllowed, actionsPermissionsAllowedActions, githubOwnedAllowedMatchesPolicy, verifiedAllowedMatchesPolicy, patternsAllowedActions, this.policy.actions.selected.patterns_allowed, shaPinningRequired, shaPinningRequiredPolicy);
             case "all":
             case "local_only":
             case "none":
-                return this.createResult(actionsPermissionsPolicy === actionsPermissionsAllowedActions, actionsPermissionsAllowedActions, actionsPermissionsPolicy);
+                return this.createResult(actionsPermissionsPolicy === actionsPermissionsAllowedActions, actionsPermissionsAllowedActions, actionsPermissionsPolicy, shaPinningRequired, shaPinningRequiredPolicy);
             default:
                 logger_1.logger.error(`error: invalid policy value '${actionsPermissionsPolicy}'. It should be one of ${POLICY_VALUES.join(", ")}.`);
         }
     }
-    createResult(actions_permissions, github_allowed_actions, policy_allowed_actions) {
+    createResult(actions_permissions, github_allowed_actions, policy_allowed_actions, sha_pinning_required, sha_pinning_required_policy) {
         let name = "Actions Check";
         let pass = false;
         let data = {};
-        if (actions_permissions) {
+        // Check sha_pinning_required if it's defined in the policy
+        const shaPinningMatches = sha_pinning_required_policy === undefined ||
+            sha_pinning_required === sha_pinning_required_policy;
+        if (actions_permissions && shaPinningMatches) {
             pass = true;
             data = {
                 actions_permissions,
                 github_allowed_actions,
                 policy_allowed_actions,
+                sha_pinning_required,
+                sha_pinning_required_policy,
             };
         }
         else {
@@ -48468,15 +48542,23 @@ class ActionsChecks {
                 actions_permissions,
                 github_allowed_actions,
                 policy_allowed_actions,
+                sha_pinning_required,
+                sha_pinning_required_policy,
             };
         }
         return { name, pass, data };
     }
-    createResultSelected(actions_permissions, github_allowed_actions, github_owned_allowed, verified_allowed, patterns_allowed_github, patterns_allowed_policy) {
+    createResultSelected(actions_permissions, github_allowed_actions, github_owned_allowed, verified_allowed, patterns_allowed_github, patterns_allowed_policy, sha_pinning_required, sha_pinning_required_policy) {
         let name = "Actions Check";
         let pass = false;
         let data = {};
-        if (actions_permissions && github_owned_allowed && verified_allowed) {
+        // Check sha_pinning_required if it's defined in the policy
+        const shaPinningMatches = sha_pinning_required_policy === undefined ||
+            sha_pinning_required === sha_pinning_required_policy;
+        if (actions_permissions &&
+            github_owned_allowed &&
+            verified_allowed &&
+            shaPinningMatches) {
             pass = true;
             data = {
                 actions_permissions,
@@ -48485,6 +48567,8 @@ class ActionsChecks {
                 verified_allowed,
                 patterns_allowed_github,
                 patterns_allowed_policy,
+                sha_pinning_required,
+                sha_pinning_required_policy,
             };
         }
         else {
@@ -48495,6 +48579,8 @@ class ActionsChecks {
                 verified_allowed,
                 patterns_allowed_github,
                 patterns_allowed_policy,
+                sha_pinning_required,
+                sha_pinning_required_policy,
             };
         }
         return {
@@ -49195,9 +49281,24 @@ exports.WorkflowsChecks = WorkflowsChecks;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getRepoWorkflowActions = exports.getRepoWorkflows = exports.getRepoWorkflowAccessPermissions = exports.getRepoDefaultWorkflowsPermissions = exports.getRepoSelectedActions = exports.getRepoActionsPermissions = void 0;
+exports.getRepoWorkflowActions = exports.getRepoWorkflows = exports.getRepoWorkflowAccessPermissions = exports.getRepoDefaultWorkflowsPermissions = exports.getRepoSelectedActions = exports.getRepoActionsPermissions = exports.getOrgActionsPermissions = void 0;
 const GitArmorKit_1 = __nccwpck_require__(2009);
 const logger_1 = __nccwpck_require__(8836);
+//Get GitHub Actions permissions for an organization
+const getOrgActionsPermissions = async (org) => {
+    try {
+        const octokit = new GitArmorKit_1.GitArmorKit();
+        const response = await octokit.rest.actions.getGithubActionsPermissionsOrganization({
+            org: org,
+        });
+        return response.data;
+    }
+    catch (error) {
+        logger_1.logger.error(error.message);
+        throw error;
+    }
+};
+exports.getOrgActionsPermissions = getOrgActionsPermissions;
 //Get GitHub Actions permissions for a repository
 const getRepoActionsPermissions = async (owner, repo) => {
     try {

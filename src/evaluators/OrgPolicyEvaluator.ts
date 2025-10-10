@@ -3,6 +3,7 @@ import { OrgPolicy, Organization, CheckResult } from "../types/common/main";
 import { OrgGHASChecks } from "./organization/OrgGHASChecks";
 import { OrgAuthenticationChecks } from "./organization/OrgAuthenticationChecks";
 import { OrgCustomRolesChecks } from "./organization/OrgCustomRolesChecks";
+import { OrgActionsChecks } from "./organization/OrgActionsChecks";
 import { getOrganization } from "../github/Organization";
 import { PrivilegesChecks } from "./organization/PrivilegesChecks";
 
@@ -76,6 +77,16 @@ export class OrgPolicyEvaluator {
         `Org Custom Roles results: ${JSON.stringify(custom_roles_checks)}`,
       );
       this.orgCheckResults.push(custom_roles_checks);
+    }
+
+    // check organization actions settings
+    if (this.policy.actions) {
+      const actions_checks = await new OrgActionsChecks(
+        this.policy,
+        this.organization,
+      ).evaluate();
+      logger.debug(`Org Actions results: ${JSON.stringify(actions_checks)}`);
+      this.orgCheckResults.push(actions_checks);
     }
   }
 

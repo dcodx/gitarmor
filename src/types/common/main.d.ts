@@ -72,13 +72,14 @@ interface AdvancedSecurity {
   code_scanning: boolean;
 }
 
-interface AllowedActions {
+interface Actions {
   permission: string;
   selected: {
     github_owned_allowed: boolean;
     verified_allowed: boolean;
     patterns_allowed: string[];
   };
+  sha_pinning_required?: boolean;
 }
 
 interface Workflows {
@@ -117,7 +118,7 @@ interface RepoPolicy {
   file_exists: string[];
   file_disallow: string[];
   advanced_security: AdvancedSecurity;
-  allowed_actions: AllowedActions;
+  actions: Actions;
   workflows: Workflows;
   runners: Runners;
   webhooks: WebHook;
@@ -169,6 +170,11 @@ interface OrgPolicy {
   member_privileges: MemberPrivileges;
   authentication: Authentication;
   advanced_security: AdvancedSecurity;
+  actions?: {
+    enabled_repositories?: string;
+    allowed_actions?: string;
+    sha_pinning_required?: boolean;
+  };
 }
 
 // Generic Check Result

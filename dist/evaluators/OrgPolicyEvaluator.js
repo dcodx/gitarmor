@@ -5,6 +5,7 @@ const logger_1 = require("../utils/logger");
 const OrgGHASChecks_1 = require("./organization/OrgGHASChecks");
 const OrgAuthenticationChecks_1 = require("./organization/OrgAuthenticationChecks");
 const OrgCustomRolesChecks_1 = require("./organization/OrgCustomRolesChecks");
+const OrgActionsChecks_1 = require("./organization/OrgActionsChecks");
 const Organization_1 = require("../github/Organization");
 const PrivilegesChecks_1 = require("./organization/PrivilegesChecks");
 class OrgPolicyEvaluator {
@@ -47,6 +48,12 @@ class OrgPolicyEvaluator {
             const custom_roles_checks = await new OrgCustomRolesChecks_1.OrgCustomRolesChecks(this.policy, this.organization, this.organization.data).evaluate();
             logger_1.logger.debug(`Org Custom Roles results: ${JSON.stringify(custom_roles_checks)}`);
             this.orgCheckResults.push(custom_roles_checks);
+        }
+        // check organization actions settings
+        if (this.policy.actions) {
+            const actions_checks = await new OrgActionsChecks_1.OrgActionsChecks(this.policy, this.organization).evaluate();
+            logger_1.logger.debug(`Org Actions results: ${JSON.stringify(actions_checks)}`);
+            this.orgCheckResults.push(actions_checks);
         }
     }
     printCheckResults() {
