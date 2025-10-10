@@ -85,3 +85,7 @@ webhooks:
   allowed_events:
     - pull
   mandatory_secret: false
+
+admins:
+  - admin1
+  - admin2

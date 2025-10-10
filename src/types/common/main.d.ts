@@ -120,6 +120,7 @@ interface RepoPolicy {
   workflows: Workflows;
   runners: Runners;
   webhooks: WebHook;
+  admins: string[];
 }
 
 // Org Policy

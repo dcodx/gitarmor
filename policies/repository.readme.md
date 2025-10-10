@@ -186,3 +186,19 @@ webhooks:
 - `allowed_events`: a list of events that can trigger the webhook.
 - `mandatory_secret`: if set to `true`, a secret must be set to authenticate the webhook.
 
+## Admins
+
+The policy validates that the repository admins match the specified list.
+
+```yml
+admins:
+  - admin1
+  - admin2
+```
+
+GitArmor will check that the admins specified in the policy are matching the admins of the repository. The check will:
+- Identify any admins in the policy that are not repository admins (missing admins)
+- Identify any repository admins that are not in the policy (extra admins)
+- Pass only if all admins match exactly
+
+
