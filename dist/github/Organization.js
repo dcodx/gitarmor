@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCustomRolesForOrg = exports.getSecurityTeamsForOrg = exports.getOrganization = exports.getRepositoriesForOrg = void 0;
 const GitArmorKit_1 = require("./GitArmorKit");
-const Logger_1 = require("../utils/Logger");
+const logger_1 = require("../utils/logger");
 // Get all repositories for an organization
 const getRepositoriesForOrg = async (org) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
@@ -42,7 +42,7 @@ const getCustomRolesForOrg = async (org) => {
         return data;
     }
     catch (error) {
-        Logger_1.logger.error(`Error in getCustomRolesForOrg: ${error.message}`);
+        logger_1.logger.error(`Error in getCustomRolesForOrg: ${error.message}`);
         return { total_count: 0, custom_roles: [] };
     }
 };

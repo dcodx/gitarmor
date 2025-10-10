@@ -5,7 +5,7 @@ import {
   getRepositoryCodeScanningAnalysis,
 } from "../../github/Repositories";
 import { Repository, CheckResult } from "../../types/common/main";
-import { logger } from "../../utils/Logger";
+import { logger } from "../../utils/logger";
 
 export class GHASChecks {
   private policy: any;

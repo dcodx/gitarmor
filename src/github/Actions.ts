@@ -1,6 +1,6 @@
 import { Endpoints } from "@octokit/types";
 import { GitArmorKit } from "./GitArmorKit";
-import { logger } from "../utils/Logger";
+import { logger } from "../utils/logger";
 
 //Get GitHub Actions permissions for a repository
 export const getRepoActionsPermissions = async (

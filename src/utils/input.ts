@@ -1,6 +1,6 @@
 import { Inputs } from "../types/common/main";
 import { getInput } from "@actions/core";
-import { logger } from "./Logger";
+import { logger } from "./logger";
 
 export const parseInputs = (): Inputs => {
   // read inputs from .env file or action inputs

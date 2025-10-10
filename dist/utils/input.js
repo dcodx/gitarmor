@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseInputs = void 0;
 const core_1 = require("@actions/core");
-const Logger_1 = require("./Logger");
+const logger_1 = require("./logger");
 const parseInputs = () => {
     // read inputs from .env file or action inputs
     const inputs = {
@@ -21,7 +21,7 @@ const parseInputs = () => {
         throw new Error("You must provide required inputs. Current inputs: " +
             JSON.stringify(inputs));
     }
-    Logger_1.logger.debug("Inputs: " + JSON.stringify(inputs));
+    logger_1.logger.debug("Inputs: " + JSON.stringify(inputs));
     return inputs;
 };
 exports.parseInputs = parseInputs;

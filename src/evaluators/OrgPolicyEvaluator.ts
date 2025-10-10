@@ -1,4 +1,4 @@
-import { logger } from "../utils/Logger";
+import { logger } from "../utils/logger";
 import { OrgPolicy, Organization, CheckResult } from "../types/common/main";
 import { OrgGHASChecks } from "./organization/OrgGHASChecks";
 import { OrgAuthenticationChecks } from "./organization/OrgAuthenticationChecks";

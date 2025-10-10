@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRepositoryCodeScanningAnalysis = exports.getRepoDependabotSecurityUpdates = exports.getRepoDependabotAlerts = exports.getRepoFile = exports.getRepoBranchProtection = exports.getRepoProtectedBranches = exports.getRepoBranch = exports.getRepoCollaborators = exports.getRepoPullRequests = exports.getRepository = exports.getRepositoriesForTeamAsAdmin = void 0;
 const GitArmorKit_1 = require("./GitArmorKit");
-const Logger_1 = require("../utils/Logger");
+const logger_1 = require("../utils/logger");
 const getRepositoriesForTeamAsAdmin = async (org, teamSlug) => {
     const octokit = new GitArmorKit_1.GitArmorKit();
     //get team id from slug
@@ -138,7 +138,7 @@ const getRepositoryCodeScanningAnalysis = async (owner, repo) => {
         return response.data;
     }
     catch (error) {
-        Logger_1.logger.debug(`Code scanning analysis fetching error: ${error.message}`);
+        logger_1.logger.debug(`Code scanning analysis fetching error: ${error.message}`);
         if ((error.status === 403 &&
             error.message.includes("Code scanning is not enabled for this repository")) ||
             error.message.includes("Advanced Security must be enabled for this repository to use code scanning.") ||

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BranchProtectionChecks = void 0;
 const Repositories_1 = require("../../github/Repositories");
-const Logger_1 = require("../../utils/Logger");
+const logger_1 = require("../../utils/logger");
 class BranchProtectionChecks {
     policy;
     repository;
@@ -97,7 +97,7 @@ class BranchProtectionChecks {
     }
     getProtectedBranchesToCheck(branchesToCheck, protectedBranches) {
         const branchesAvailable = branchesToCheck.filter((branch) => protectedBranches.map((branch) => branch.name).includes(branch));
-        Logger_1.logger.debug("Only these branches will be checked against branch protection rules: " +
+        logger_1.logger.debug("Only these branches will be checked against branch protection rules: " +
             branchesAvailable);
         return branchesAvailable;
     }
@@ -125,7 +125,7 @@ class BranchProtectionChecks {
             }
             catch (error) {
                 // If the branch is protected but no rules are set.
-                Logger_1.logger.debug(`Exception: ${error}`);
+                logger_1.logger.debug(`Exception: ${error}`);
                 results[branch] = {
                     error: "No branch protection rules set for this branch",
                 };

@@ -3,7 +3,7 @@ import {
   getRepoActionsPermissions,
   getRepoSelectedActions,
 } from "../../github/Actions";
-import { logger } from "../../utils/Logger";
+import { logger } from "../../utils/logger";
 
 const POLICY_VALUES = ["none", "all", "local_only", "selected"];
 

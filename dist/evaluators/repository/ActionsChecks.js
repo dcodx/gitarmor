@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActionsChecks = void 0;
 const Actions_1 = require("../../github/Actions");
-const Logger_1 = require("../../utils/Logger");
+const logger_1 = require("../../utils/logger");
 const POLICY_VALUES = ["none", "all", "local_only", "selected"];
 class ActionsChecks {
     policy;
@@ -22,7 +22,7 @@ class ActionsChecks {
         switch (actionsPermissionsPolicy) {
             case "selected":
                 if (!this.policy.allowed_actions.selected.patterns_allowed) {
-                    Logger_1.logger.error("error: the policy (.yml) should have the list of patterns_allowed when permission is 'selected'");
+                    logger_1.logger.error("error: the policy (.yml) should have the list of patterns_allowed when permission is 'selected'");
                     return this.createResult(false, actionsPermissionsAllowedActions, actionsPermissionsPolicy);
                 }
                 if (actionsPermissionsAllowedActions !== "selected")
@@ -42,7 +42,7 @@ class ActionsChecks {
             case "none":
                 return this.createResult(actionsPermissionsPolicy === actionsPermissionsAllowedActions, actionsPermissionsAllowedActions, actionsPermissionsPolicy);
             default:
-                Logger_1.logger.error(`error: invalid policy value '${actionsPermissionsPolicy}'. It should be one of ${POLICY_VALUES.join(", ")}.`);
+                logger_1.logger.error(`error: invalid policy value '${actionsPermissionsPolicy}'. It should be one of ${POLICY_VALUES.join(", ")}.`);
         }
     }
     createResult(actions_permissions, github_allowed_actions, policy_allowed_actions) {
