@@ -48,24 +48,20 @@ export class AdminsChecks {
     missing_admins: string[],
     extra_admins: string[],
   ): CheckResult {
-    let name = "Admins Check";
-    let pass = false;
-    let data = {};
+    const name = "Admins Check";
+    const pass = missing_admins.length === 0 && extra_admins.length === 0;
 
-    if (missing_admins.length === 0 && extra_admins.length === 0) {
-      pass = true;
-      data = {
-        policy_admins,
-        actual_admins,
-      };
-    } else {
-      data = {
-        policy_admins,
-        actual_admins,
+    const data = {
+      passed: policy_admins.filter((a) => actual_admins.includes(a)),
+      failed: {
         missing_admins,
         extra_admins,
-      };
-    }
+      },
+      info: {
+        policy_admins,
+        actual_admins,
+      },
+    };
 
     return { name, pass, data };
   }

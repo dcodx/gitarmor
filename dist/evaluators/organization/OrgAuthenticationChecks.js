@@ -18,14 +18,22 @@ class OrgAuthenticationChecks {
         return true;
     }
     async evaluate() {
-        let checks = {
-            mfaRequired: this.checkMFARequired(),
-        };
-        let name = "Org Authentication Checks";
-        let pass = false;
-        let data = {};
-        pass = Object.values(checks).every((check) => check === true);
-        data = checks;
+        const name = "Org Authentication Checks";
+        const passed = [];
+        const failed = {};
+        const info = {};
+        const desired = this.policy?.authentication?.mfa_required;
+        if (typeof desired === "boolean") {
+            const actual = !!this.organizationData.two_factor_requirement_enabled;
+            if (actual === desired) {
+                passed.push("mfa_required");
+            }
+            else {
+                failed.mfa_required = false;
+            }
+        }
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }

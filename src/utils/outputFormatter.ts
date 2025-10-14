@@ -37,7 +37,7 @@ export function printEnhancedCheckResult(
   // Print GitHub documentation link
   if (metadata?.githubDocs) {
     logger.info(
-      `  ${chalk.blue("📘 GitHub Docs:")} ${chalk.cyan(metadata.githubDocs)}`,
+      `  ${chalk.blue("GitHub Docs:")} ${chalk.cyan(metadata.githubDocs)}`,
     );
   }
 
@@ -49,13 +49,13 @@ export function printEnhancedCheckResult(
         ? "organization.threats.md"
         : "repository.threats.md";
       logger.info(
-        `  ${chalk.red("⚠️  Threat Model:")} See "${metadata.threatModelSection}" in ${threatFile}`,
+        `  ${chalk.red("GitArmor Threat Model:")} See "${metadata.threatModelSection}" in ${threatFile}`,
       );
     }
 
     // Print SLSA.dev threats
     if (metadata?.slsaThreats && metadata.slsaThreats.length > 0) {
-      logger.info(`  ${chalk.magenta("🔗 SLSA.dev Threats:")}`);
+      logger.info(`  ${chalk.magenta("SLSA.dev Threats:")}`);
       metadata.slsaThreats.forEach((threat) => {
         logger.info(`     - ${chalk.cyan(threat)}`);
       });
@@ -63,7 +63,7 @@ export function printEnhancedCheckResult(
 
     // Print MS DevOps Threat Matrix
     if (metadata?.msDevOpsThreats && metadata.msDevOpsThreats.length > 0) {
-      logger.info(`  ${chalk.magenta("🔗 MS DevOps Threat Matrix:")}`);
+      logger.info(`  ${chalk.magenta("MS DevOps Threat Matrix:")}`);
       metadata.msDevOpsThreats.forEach((threat) => {
         logger.info(`     - ${chalk.cyan(threat)}`);
       });

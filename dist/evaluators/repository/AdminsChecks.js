@@ -24,24 +24,19 @@ class AdminsChecks {
         return this.createResult(policyAdmins, actualAdmins, missingAdmins, extraAdmins);
     }
     createResult(policy_admins, actual_admins, missing_admins, extra_admins) {
-        let name = "Admins Check";
-        let pass = false;
-        let data = {};
-        if (missing_admins.length === 0 && extra_admins.length === 0) {
-            pass = true;
-            data = {
-                policy_admins,
-                actual_admins,
-            };
-        }
-        else {
-            data = {
-                policy_admins,
-                actual_admins,
+        const name = "Admins Check";
+        const pass = missing_admins.length === 0 && extra_admins.length === 0;
+        const data = {
+            passed: policy_admins.filter((a) => actual_admins.includes(a)),
+            failed: {
                 missing_admins,
                 extra_admins,
-            };
-        }
+            },
+            info: {
+                policy_admins,
+                actual_admins,
+            },
+        };
         return { name, pass, data };
     }
 }

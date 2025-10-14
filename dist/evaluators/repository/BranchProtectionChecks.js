@@ -56,43 +56,63 @@ class BranchProtectionChecks {
         }
     }
     createResult(nonProtectedBranches, nonExistentBranches, protectedBranchNames) {
-        let name = "Branch Protection";
-        let pass = false;
-        let data = {};
-        if (nonProtectedBranches.length === 0 && nonExistentBranches.length === 0) {
-            pass = true;
-            data = { allBranchesProtected: true, protectedBranchNames };
-        }
-        else {
-            data = {
-                nonProtectedBranches,
-                nonExistentBranches,
-                protectedBranchNames,
-            };
-        }
+        const name = "Branch Protection";
+        // Policy branches declared in the policy
+        const policyBranchNames = (this.policy?.protected_branches || [])
+            .map((b) => b?.name)
+            .filter((n) => !!n);
+        // Passed = policy branches that are protected in the repo
+        const passed = protectedBranchNames.filter((n) => policyBranchNames.includes(n));
+        // Failed buckets per requirement
+        const failed = {
+            not_protected: nonProtectedBranches,
+            non_existent: nonExistentBranches,
+        };
+        // Info = protected branches in repo that are NOT declared in policy
+        const extraProtected = protectedBranchNames.filter((n) => !policyBranchNames.includes(n));
+        const info = {
+            extra_protected_branches: extraProtected,
+        };
+        const pass = failed.not_protected.length === 0 && failed.non_existent.length === 0;
+        const data = {
+            passed,
+            failed,
+            info,
+        };
         return { name, pass, data };
     }
     createResultRequirePullRequest(results) {
-        let name = "Branch Protection - Pull Request Settings";
-        let pass = true;
-        let data = results;
-        if (Object.keys(data).length === 0 && data.constructor === Object) {
-            // data is an empty object, so there are no branch protection rules defined
-            pass = false;
-        }
-        //for each branch, check if all the rules are satisfied
-        for (const branch in data) {
-            if (data[branch].error) {
-                pass = false;
-                break;
-            }
-            const branchResults = data[branch];
-            const branchPass = Object.values(branchResults).every((value) => value);
+        const name = "Branch Protection - Pull Request Settings";
+        // Determine branches that passed all PR settings
+        const passed = Object.entries(results)
+            .filter(([_, branchResults]) => {
+            if (!branchResults || branchResults.error)
+                return false;
+            // Consider only top-level booleans as in previous implementation
+            return Object.values(branchResults).every((value) => !!value);
+        })
+            .map(([branch]) => branch);
+        // Collect rules failures for protected branches that didn't pass
+        const rules_not_satisfied = {};
+        Object.entries(results).forEach(([branch, branchResults]) => {
+            if (!branchResults || branchResults.error)
+                return;
+            const branchPass = Object.values(branchResults).every((value) => !!value);
             if (!branchPass) {
-                pass = false;
-                break;
+                rules_not_satisfied[branch] = branchResults;
             }
-        }
+        });
+        // Failed should be a direct map of branch -> failed details (no wrapper)
+        const failed = rules_not_satisfied;
+        const pass = Object.keys(failed).length === 0;
+        // Info: branches that are protected but have no PR rules configured
+        const no_pr_rules = Object.entries(results)
+            .filter(([_, branchResults]) => !!branchResults?.error)
+            .map(([branch]) => branch);
+        const info = {};
+        if (no_pr_rules.length > 0)
+            info.no_pr_rules = no_pr_rules;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
     getProtectedBranchesToCheck(branchesToCheck, protectedBranches) {

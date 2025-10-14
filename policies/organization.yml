@@ -21,7 +21,7 @@ member_privileges:
   # admin_deletion_transfer: true
   # admin_issue_deletion: true
   # members_team_creation: true
-  # dependency_graph_access: true
+  dependency_graph_access: true
 
 
 # Authentication

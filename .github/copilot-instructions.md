@@ -156,3 +156,17 @@ repository.threats.md
 - Policy definitions in `policies/` directory control what security checks are performed
 - Logger configuration in `src/utils/logger.ts` - set DEBUG=true for verbose output
 - Main application logic in `src/main.ts` coordinates policy evaluation and reporting
+
+### Check Result Data Contract (Consistency Rule)
+All checks must return data in the same structured format to keep CLI and reports consistent:
+
+- pass: boolean — overall pass/fail for the check
+- name: string — descriptive check name
+- data: object with the following shape
+  - passed: string[] — identifiers that satisfied the policy (e.g., branch names)
+  - failed: object — grouped failure buckets (domain-specific)
+  - info: object — additional useful context not strictly part of pass/fail (domain-specific)
+
+Notes:
+- Keep keys stable (passed, failed, info) across all checks.
+- Tailor the arrays/objects under failed and info to the domain of the check while preserving the top-level structure.

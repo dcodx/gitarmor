@@ -28,7 +28,7 @@ function printEnhancedCheckResult(checkResult, isOrgCheck = false, policyDir = "
     const metadata = (0, checkMetadata_1.getCheckMetadata)(checkResult.name, isOrgCheck);
     // Print GitHub documentation link
     if (metadata?.githubDocs) {
-        logger_1.logger.info(`  ${chalk_1.default.blue("📘 GitHub Docs:")} ${chalk_1.default.cyan(metadata.githubDocs)}`);
+        logger_1.logger.info(`  ${chalk_1.default.blue("GitHub Docs:")} ${chalk_1.default.cyan(metadata.githubDocs)}`);
     }
     // For failed checks, print threat model and additional resources
     if (checkResult.pass === false) {
@@ -37,18 +37,18 @@ function printEnhancedCheckResult(checkResult, isOrgCheck = false, policyDir = "
             const threatFile = isOrgCheck
                 ? "organization.threats.md"
                 : "repository.threats.md";
-            logger_1.logger.info(`  ${chalk_1.default.red("⚠️  Threat Model:")} See "${metadata.threatModelSection}" in ${threatFile}`);
+            logger_1.logger.info(`  ${chalk_1.default.red("GitArmor Threat Model:")} See "${metadata.threatModelSection}" in ${threatFile}`);
         }
         // Print SLSA.dev threats
         if (metadata?.slsaThreats && metadata.slsaThreats.length > 0) {
-            logger_1.logger.info(`  ${chalk_1.default.magenta("🔗 SLSA.dev Threats:")}`);
+            logger_1.logger.info(`  ${chalk_1.default.magenta("SLSA.dev Threats:")}`);
             metadata.slsaThreats.forEach((threat) => {
                 logger_1.logger.info(`     - ${chalk_1.default.cyan(threat)}`);
             });
         }
         // Print MS DevOps Threat Matrix
         if (metadata?.msDevOpsThreats && metadata.msDevOpsThreats.length > 0) {
-            logger_1.logger.info(`  ${chalk_1.default.magenta("🔗 MS DevOps Threat Matrix:")}`);
+            logger_1.logger.info(`  ${chalk_1.default.magenta("MS DevOps Threat Matrix:")}`);
             metadata.msDevOpsThreats.forEach((threat) => {
                 logger_1.logger.info(`     - ${chalk_1.default.cyan(threat)}`);
             });

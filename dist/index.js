@@ -48013,66 +48013,18 @@ class FilesDisallowChecks {
         const foundDisallowedFiles = fileDisallowResults
             .filter((result) => result.exists)
             .map((result) => result.file);
-        // Check if disallowed files are in .gitignore
-        const gitignoreStatus = await this.checkGitignore(foundDisallowedFiles);
-        return this.createResult(foundDisallowedFiles, gitignoreStatus);
+        // Files that pass the check are the ones NOT found in the repo
+        const safeFiles = this.policy.file_disallow.filter((f) => !foundDisallowedFiles.includes(f));
+        return this.createResult(safeFiles, foundDisallowedFiles);
     }
-    async checkGitignore(disallowedFiles) {
-        if (disallowedFiles.length === 0) {
-            return { hasGitignore: false, missingInGitignore: [] };
-        }
-        try {
-            const gitignoreContent = await (0, Repositories_1.getRepoFile)(this.repository.owner, this.repository.name, ".gitignore");
-            // Decode the base64 content
-            let gitignoreText = "";
-            if ("content" in gitignoreContent && gitignoreContent.content) {
-                gitignoreText = Buffer.from(gitignoreContent.content, "base64").toString("utf-8");
-            }
-            // Parse .gitignore patterns
-            const gitignorePatterns = gitignoreText
-                .split("\n")
-                .map((line) => line.trim())
-                .filter((line) => line && !line.startsWith("#"));
-            // Check which disallowed files are NOT in .gitignore
-            const missingInGitignore = disallowedFiles.filter((file) => {
-                return !gitignorePatterns.some((pattern) => {
-                    // Simple pattern matching - check exact match or pattern prefix
-                    if (pattern === file)
-                        return true;
-                    // Handle patterns like .env* that would match .env
-                    if (pattern.endsWith("*") && file.startsWith(pattern.slice(0, -1)))
-                        return true;
-                    // Handle directory patterns
-                    if (pattern.endsWith("/") && file.startsWith(pattern))
-                        return true;
-                    return false;
-                });
-            });
-            return { hasGitignore: true, missingInGitignore };
-        }
-        catch (error) {
-            // .gitignore doesn't exist
-            return {
-                hasGitignore: false,
-                missingInGitignore: disallowedFiles,
-            };
-        }
-    }
-    createResult(foundDisallowedFiles, gitignoreStatus) {
-        let name = "Files Disallow Check";
-        let pass = false;
-        let data = {};
-        if (foundDisallowedFiles.length === 0) {
-            pass = true;
-            data = { noDisallowedFilesFound: true };
-        }
-        else {
-            data = {
-                foundDisallowedFiles,
-                gitignoreExists: gitignoreStatus.hasGitignore,
-                missingInGitignore: gitignoreStatus.missingInGitignore,
-            };
-        }
+    createResult(safeFiles, foundDisallowedFiles) {
+        const name = "Files Disallow Check";
+        const pass = foundDisallowedFiles.length === 0;
+        const data = {
+            passed: safeFiles,
+            failed: foundDisallowedFiles,
+            info: {},
+        };
         return { name, pass, data };
     }
 }
@@ -48108,19 +48060,17 @@ class FilesExistChecks {
         });
         const fileExistenceResults = await Promise.all(fileExistenceChecks);
         const missingFiles = this.policy.file_exists.filter((_, index) => !fileExistenceResults[index]);
-        return this.createResult(missingFiles);
+        const existingFiles = this.policy.file_exists.filter((_, index) => fileExistenceResults[index]);
+        return this.createResult(missingFiles, existingFiles);
     }
-    createResult(missingFiles) {
-        let name = "Files Exist Check";
-        let pass = false;
-        let data = {};
-        if (missingFiles.length === 0) {
-            pass = true;
-            data = { allFilesExist: true };
-        }
-        else {
-            data = { missingFiles };
-        }
+    createResult(missingFiles, existingFiles) {
+        const name = "Files Exist Check";
+        const pass = missingFiles.length === 0;
+        const data = {
+            passed: existingFiles,
+            failed: missingFiles,
+            info: {},
+        };
         return { name, pass, data };
     }
 }
@@ -48146,23 +48096,45 @@ class OrgActionsChecks {
     }
     async evaluate() {
         const actionsPermissions = await (0, Actions_1.getOrgActionsPermissions)(this.organization.name);
-        const checks = {
-            enabled_repositories: this.checkEnabledRepositories(actionsPermissions.enabled_repositories),
-            allowed_actions: this.checkAllowedActions(actionsPermissions.allowed_actions),
-            sha_pinning_required: this.checkShaPinningRequired(actionsPermissions.sha_pinning_required),
-        };
         const name = "Org Actions Checks";
-        const pass = Object.values(checks).every((check) => check === true);
-        const data = {
-            enabled_repositories_github: actionsPermissions.enabled_repositories,
-            enabled_repositories_policy: this.policy.actions.enabled_repositories,
-            allowed_actions_github: actionsPermissions.allowed_actions,
-            allowed_actions_policy: this.policy.actions.allowed_actions,
-            sha_pinning_required_github: actionsPermissions
-                .sha_pinning_required,
-            sha_pinning_required_policy: this.policy.actions.sha_pinning_required,
-            ...checks,
-        };
+        const passed = [];
+        const failed = {};
+        const info = {};
+        const policy = this.policy?.actions || {};
+        if (policy.enabled_repositories !== undefined) {
+            if (actionsPermissions.enabled_repositories === policy.enabled_repositories) {
+                passed.push("enabled_repositories");
+            }
+            else {
+                failed.enabled_repositories = {
+                    actual: actionsPermissions.enabled_repositories,
+                    expected: policy.enabled_repositories,
+                };
+            }
+        }
+        if (policy.allowed_actions !== undefined) {
+            if (actionsPermissions.allowed_actions === policy.allowed_actions) {
+                passed.push("allowed_actions");
+            }
+            else {
+                failed.allowed_actions = {
+                    actual: actionsPermissions.allowed_actions,
+                    expected: policy.allowed_actions,
+                };
+            }
+        }
+        if (typeof policy.sha_pinning_required === "boolean") {
+            const actualShaPinning = actionsPermissions
+                .sha_pinning_required;
+            if (actualShaPinning === policy.sha_pinning_required) {
+                passed.push("sha_pinning_required");
+            }
+            else {
+                failed.sha_pinning_required = false;
+            }
+        }
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
     checkEnabledRepositories(githubValue) {
@@ -48213,14 +48185,22 @@ class OrgAuthenticationChecks {
         return true;
     }
     async evaluate() {
-        let checks = {
-            mfaRequired: this.checkMFARequired(),
-        };
-        let name = "Org Authentication Checks";
-        let pass = false;
-        let data = {};
-        pass = Object.values(checks).every((check) => check === true);
-        data = checks;
+        const name = "Org Authentication Checks";
+        const passed = [];
+        const failed = {};
+        const info = {};
+        const desired = this.policy?.authentication?.mfa_required;
+        if (typeof desired === "boolean") {
+            const actual = !!this.organizationData.two_factor_requirement_enabled;
+            if (actual === desired) {
+                passed.push("mfa_required");
+            }
+            else {
+                failed.mfa_required = false;
+            }
+        }
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }
@@ -48272,14 +48252,46 @@ class OrgCustomRolesChecks {
         return true;
     }
     async evaluate() {
-        let checks = {
-            customRoles: await this.checkCustomRoles(),
-        };
-        let name = "Org Custom Roles Checks";
-        let pass = false;
-        let data = {};
-        pass = Object.values(checks).every((check) => check === true);
-        data = checks;
+        const name = "Org Custom Roles Checks";
+        const passed = [];
+        const failed = {};
+        const info = {};
+        if (!this.policy.custom_roles || this.policy.custom_roles.length === 0) {
+            // Nothing to evaluate
+            return { name, pass: true, data: { passed: [], failed: {}, info: {} } };
+        }
+        const actual = await (0, Organization_1.getCustomRolesForOrg)(this.organization.name);
+        const actualRoles = actual?.custom_roles || [];
+        const actualMap = new Map(actualRoles.map((r) => [r.name, r]));
+        const missing_roles = [];
+        const mismatched_roles = [];
+        for (const policyRole of this.policy.custom_roles) {
+            const match = actualMap.get(policyRole.name);
+            if (!match) {
+                missing_roles.push(policyRole.name);
+                continue;
+            }
+            const baseRoleMatch = match.base_role === policyRole.base_role;
+            const missingPerms = (policyRole.permissions || []).filter((p) => !(match.permissions || []).includes(p));
+            if (baseRoleMatch && missingPerms.length === 0) {
+                // role fully matches policy
+                // keep a simple indicator under passed
+                passed.push(policyRole.name);
+            }
+            else {
+                mismatched_roles.push({
+                    name: policyRole.name,
+                    base_role: baseRoleMatch ? undefined : match.base_role,
+                    missing_permissions: missingPerms.length ? missingPerms : undefined,
+                });
+            }
+        }
+        if (missing_roles.length > 0)
+            failed.missing_roles = missing_roles;
+        if (mismatched_roles.length > 0)
+            failed.mismatched_roles = mismatched_roles;
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }
@@ -48369,27 +48381,42 @@ class OrgGHASChecks {
         return { result: true, teams: { securityTeams: [], policyTeams: [] } };
     }
     async evaluate() {
-        let checks = {
-            automaticDependencyGraph: this.checkAutomaticDependencyGraph(),
-            automaticDependabotAlerts: this.checkAutomaticDependabotAlerts(),
-            automaticDependabotSecurityUpdates: this.checkAutomaticDependabotSecurityUpdates(),
-            automaticGHASEnablement: this.checkAutomaticGHASEnablement(),
-            automaticSecretScanning: this.checkAutomaticSecretScanning(),
-            automaticPushProtection: this.checkAutomaticPushProtection(),
-            automaticSecretScanningValidityCheck: this.checkAutomaticSecretScanningValidityCheck(),
-            // automaticCodeqlExtended: this.checkAutomaticCodeQLExtended(),
-            // automaticCodeqlAutofix: this.checkAutomaticCodeQLAutofix(),
-            securityManagerTeams: false,
+        const name = "Org GHAS Checks";
+        const passed = [];
+        const failed = {};
+        const info = {};
+        const desired = this.policy?.advanced_security || {};
+        const compare = (key, actual, expected) => {
+            if (typeof expected !== "boolean")
+                return; // not declared in policy
+            if (actual === expected)
+                passed.push(key);
+            else
+                failed[key] = false;
         };
-        let securityManagerTeamsCheck = await this.checkSecurityManagerTeams();
-        checks.securityManagerTeams = securityManagerTeamsCheck.result;
-        let name = "Org GHAS Checks";
-        let pass = false;
-        let data = {
-            ...checks,
-            securityManagerTeamsTeams: securityManagerTeamsCheck.teams,
-        };
-        pass = Object.values(checks).every((check) => check === true);
+        compare("automatic_dependency_graph", this.organizationData.dependency_graph_enabled_for_new_repositories, desired.automatic_dependency_graph);
+        compare("automatic_dependabot_alerts", this.organizationData.dependabot_alerts_enabled_for_new_repositories, desired.automatic_dependabot_alerts);
+        compare("automatic_dependabot_security_updates", this.organizationData
+            .dependabot_security_updates_enabled_for_new_repositories, desired.automatic_dependabot_security_updates);
+        compare("automatic_ghas_enablement", this.organizationData.advanced_security_enabled_for_new_repositories, desired.automatic_ghas_enablement);
+        compare("automatic_secret_scanning", this.organizationData.secret_scanning_enabled_for_new_repositories, desired.automatic_secret_scanning);
+        compare("automatic_push_protection", this.organizationData
+            .secret_scanning_push_protection_enabled_for_new_repositories, desired.automatic_push_protection);
+        compare("automatic_secret_scanning_validity_check", this.organizationData.secret_scanning_validity_checks_enabled, desired.automatic_secret_scanning_validity_check);
+        const securityManagerTeamsCheck = await this.checkSecurityManagerTeams();
+        if (Array.isArray(desired.security_manager_teams) &&
+            desired.security_manager_teams.length > 0) {
+            if (securityManagerTeamsCheck.result)
+                passed.push("security_manager_teams");
+            else
+                failed.security_manager_teams = {
+                    policy_teams: desired.security_manager_teams,
+                    actual_teams: securityManagerTeamsCheck.teams.securityTeams,
+                };
+        }
+        info.security_manager_teams_details = securityManagerTeamsCheck.teams;
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }
@@ -48413,48 +48440,101 @@ class PrivilegesChecks {
         this.organization = organization;
     }
     async checkPrivileges() {
-        const orgData = this.organization.data; //this is from the data we get from the GitHub API in org.data
-        const requiredPermissions = this.policy.member_privileges; //this is from the policy loaded in OrgPolicy
-        // Extract only the properties used for comparison
+        const orgData = this.organization.data;
+        const policy = (this.policy.member_privileges || {});
+        // Actual privileges snapshot (fixed incorrect mappings)
         const orgMemberPrivileges = {
             default_repository_permission: orgData.default_repository_permission,
             members_can_create_repositories: orgData.members_can_create_repositories,
-            members_allowed_repository_creation_type: orgData.members_allowed_repository_creation_type,
-            members_can_create_private_repositories: orgData.members_can_create_public_repositories,
+            members_can_create_private_repositories: orgData.members_can_create_private_repositories,
             members_can_create_internal_repositories: orgData.members_can_create_internal_repositories,
             members_can_create_public_repositories: orgData.members_can_create_public_repositories,
             members_can_fork_private_repositories: orgData.members_can_fork_private_repositories,
             members_can_create_public_pages: orgData.members_can_create_public_pages,
             members_can_create_private_pages: orgData.members_can_create_private_pages,
-            members_can_create_pages: orgData.members_members_can_create_pages,
         };
-        // Check if the organization has the required permissions by comparing the values
-        const hasRequiredPermissions = 
-        // base permission
-        orgMemberPrivileges.default_repository_permission ===
-            requiredPermissions.base_permission &&
-            // repository creation
-            orgMemberPrivileges.members_can_create_repositories === true &&
-            orgMemberPrivileges.members_allowed_repository_creation_type ===
-                requiredPermissions.repository_creation &&
-            // repository forking
-            orgMemberPrivileges.members_can_fork_private_repositories ===
-                requiredPermissions.repository_forking &&
-            // pages creation
-            orgMemberPrivileges.members_can_create_pages === true &&
-            orgMemberPrivileges.members_can_create_public_pages ===
-                (requiredPermissions.pages_creation.includes("public") &&
-                    orgMemberPrivileges.members_can_create_private_pages ===
-                        requiredPermissions.pages_creation.includes("private"));
-        return this.createResult(hasRequiredPermissions, orgMemberPrivileges, requiredPermissions);
+        // Derive sets for comparison
+        const actualRepoCreation = [];
+        if (orgMemberPrivileges.members_can_create_private_repositories)
+            actualRepoCreation.push("private");
+        if (orgMemberPrivileges.members_can_create_internal_repositories)
+            actualRepoCreation.push("internal");
+        if (orgMemberPrivileges.members_can_create_public_repositories)
+            actualRepoCreation.push("public");
+        const desiredRepoCreation = policy.repository_creation || [];
+        const actualPagesCreation = [];
+        if (orgMemberPrivileges.members_can_create_public_pages)
+            actualPagesCreation.push("public");
+        if (orgMemberPrivileges.members_can_create_private_pages)
+            actualPagesCreation.push("private");
+        const desiredPagesCreation = policy.pages_creation || [];
+        const passed = [];
+        const failed = {};
+        const info = {};
+        // base_permission
+        if (typeof policy.base_permission === "string") {
+            if (orgMemberPrivileges.default_repository_permission ===
+                policy.base_permission) {
+                passed.push("base_permission");
+            }
+            else {
+                failed.base_permission = {
+                    actual: orgMemberPrivileges.default_repository_permission,
+                    expected: policy.base_permission,
+                };
+            }
+        }
+        // repository_creation
+        if (Array.isArray(desiredRepoCreation)) {
+            const sort = (arr) => [...arr].sort();
+            if (JSON.stringify(sort(actualRepoCreation)) ===
+                JSON.stringify(sort(desiredRepoCreation))) {
+                passed.push("repository_creation");
+            }
+            else {
+                failed.repository_creation = {
+                    actual: actualRepoCreation,
+                    expected: desiredRepoCreation,
+                };
+            }
+        }
+        // repository_forking
+        if (typeof policy.repository_forking === "boolean") {
+            if (orgMemberPrivileges.members_can_fork_private_repositories ===
+                policy.repository_forking) {
+                passed.push("repository_forking");
+            }
+            else {
+                failed.repository_forking = false;
+            }
+        }
+        // pages_creation
+        if (Array.isArray(desiredPagesCreation)) {
+            const sort = (arr) => [...arr].sort();
+            if (JSON.stringify(sort(actualPagesCreation)) ===
+                JSON.stringify(sort(desiredPagesCreation))) {
+                passed.push("pages_creation");
+            }
+            else {
+                failed.pages_creation = {
+                    actual: actualPagesCreation,
+                    expected: desiredPagesCreation,
+                };
+            }
+        }
+        info.actual = orgMemberPrivileges;
+        info.policy = {
+            base_permission: policy.base_permission,
+            repository_creation: desiredRepoCreation,
+            repository_forking: policy.repository_forking,
+            pages_creation: desiredPagesCreation,
+        };
+        return this.createResult(passed, failed, info);
     }
-    createResult(hasRequiredPermissions, orgMemberPrivileges, requiredPermissions) {
-        let name = "Members Privileges Check";
-        let pass = hasRequiredPermissions;
-        let data = {
-            orgMemberPrivileges,
-            requiredPermissions,
-        };
+    createResult(passed, failed, info) {
+        const name = "Members Privileges Check";
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }
@@ -48517,73 +48597,90 @@ class ActionsChecks {
         }
     }
     createResult(actions_permissions, github_allowed_actions, policy_allowed_actions, sha_pinning_required, sha_pinning_required_policy) {
-        let name = "Actions Check";
-        let pass = false;
-        let data = {};
-        // Check sha_pinning_required if it's defined in the policy
-        const shaPinningMatches = sha_pinning_required_policy === undefined ||
-            sha_pinning_required === sha_pinning_required_policy;
-        if (actions_permissions && shaPinningMatches) {
-            pass = true;
-            data = {
-                actions_permissions,
-                github_allowed_actions,
-                policy_allowed_actions,
-                sha_pinning_required,
-                sha_pinning_required_policy,
-            };
+        const name = "Actions Check";
+        const passed = [];
+        const failed = {};
+        // Permission comparison
+        if (actions_permissions) {
+            passed.push("permission");
         }
         else {
-            data = {
-                actions_permissions,
-                github_allowed_actions,
-                policy_allowed_actions,
-                sha_pinning_required,
-                sha_pinning_required_policy,
+            failed.permission = {
+                actual: github_allowed_actions,
+                expected: policy_allowed_actions,
             };
         }
+        // SHA pinning comparison (only if policy specifies it)
+        if (typeof sha_pinning_required_policy === "boolean") {
+            if (sha_pinning_required === sha_pinning_required_policy) {
+                passed.push("sha_pinning_required");
+            }
+            else {
+                failed.sha_pinning_required = false;
+            }
+        }
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info: {} };
         return { name, pass, data };
     }
     createResultSelected(actions_permissions, github_allowed_actions, github_owned_allowed, verified_allowed, patterns_allowed_github, patterns_allowed_policy, sha_pinning_required, sha_pinning_required_policy) {
-        let name = "Actions Check";
-        let pass = false;
-        let data = {};
-        // Check sha_pinning_required if it's defined in the policy
-        const shaPinningMatches = sha_pinning_required_policy === undefined ||
-            sha_pinning_required === sha_pinning_required_policy;
-        if (actions_permissions &&
-            github_owned_allowed &&
-            verified_allowed &&
-            shaPinningMatches) {
-            pass = true;
-            data = {
-                actions_permissions,
-                github_allowed_actions,
-                github_owned_allowed,
-                verified_allowed,
-                patterns_allowed_github,
-                patterns_allowed_policy,
-                sha_pinning_required,
-                sha_pinning_required_policy,
-            };
+        const name = "Actions Check";
+        const passed = [];
+        const failed = {};
+        // Permission must be 'selected'
+        if (actions_permissions) {
+            passed.push("permission");
         }
         else {
-            data = {
-                actions_permissions,
-                github_allowed_actions,
-                github_owned_allowed,
-                verified_allowed,
-                patterns_allowed_github,
-                patterns_allowed_policy,
-                sha_pinning_required,
-                sha_pinning_required_policy,
+            failed.permission = {
+                actual: github_allowed_actions,
+                expected: "selected",
             };
         }
-        return {
-            name,
-            pass,
-            data,
-        };
+        // github_owned_allowed
+        if (github_owned_allowed) {
+            passed.push("github_owned_allowed");
+        }
+        else {
+            failed.github_owned_allowed = {
+                actual: false,
+                expected: true,
+            };
+        }
+        // verified_allowed
+        if (verified_allowed) {
+            passed.push("verified_allowed");
+        }
+        else {
+            failed.verified_allowed = {
+                actual: false,
+                expected: true,
+            };
+        }
+        // patterns_allowed: repo patterns must be subset of policy patterns
+        const missing_in_policy = patterns_allowed_github.filter((p) => !patterns_allowed_policy.includes(p));
+        if (missing_in_policy.length === 0) {
+            passed.push("patterns_allowed");
+        }
+        else {
+            failed.patterns_allowed = {
+                missing_in_policy,
+                actual: patterns_allowed_github,
+                expected_superset: patterns_allowed_policy,
+            };
+        }
+        // SHA pinning comparison (only if policy specifies it)
+        if (typeof sha_pinning_required_policy === "boolean") {
+            if (sha_pinning_required === sha_pinning_required_policy) {
+                passed.push("sha_pinning_required");
+            }
+            else {
+                failed.sha_pinning_required = false;
+            }
+        }
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info: {} };
+        return { name, pass, data };
     }
     // check whether the actions used in the workflows declared in a repository use the pinning feature as specified in the policy
     async checkActionsPinning() {
@@ -48630,24 +48727,19 @@ class AdminsChecks {
         return this.createResult(policyAdmins, actualAdmins, missingAdmins, extraAdmins);
     }
     createResult(policy_admins, actual_admins, missing_admins, extra_admins) {
-        let name = "Admins Check";
-        let pass = false;
-        let data = {};
-        if (missing_admins.length === 0 && extra_admins.length === 0) {
-            pass = true;
-            data = {
-                policy_admins,
-                actual_admins,
-            };
-        }
-        else {
-            data = {
-                policy_admins,
-                actual_admins,
+        const name = "Admins Check";
+        const pass = missing_admins.length === 0 && extra_admins.length === 0;
+        const data = {
+            passed: policy_admins.filter((a) => actual_admins.includes(a)),
+            failed: {
                 missing_admins,
                 extra_admins,
-            };
-        }
+            },
+            info: {
+                policy_admins,
+                actual_admins,
+            },
+        };
         return { name, pass, data };
     }
 }
@@ -48718,43 +48810,63 @@ class BranchProtectionChecks {
         }
     }
     createResult(nonProtectedBranches, nonExistentBranches, protectedBranchNames) {
-        let name = "Branch Protection";
-        let pass = false;
-        let data = {};
-        if (nonProtectedBranches.length === 0 && nonExistentBranches.length === 0) {
-            pass = true;
-            data = { allBranchesProtected: true, protectedBranchNames };
-        }
-        else {
-            data = {
-                nonProtectedBranches,
-                nonExistentBranches,
-                protectedBranchNames,
-            };
-        }
+        const name = "Branch Protection";
+        // Policy branches declared in the policy
+        const policyBranchNames = (this.policy?.protected_branches || [])
+            .map((b) => b?.name)
+            .filter((n) => !!n);
+        // Passed = policy branches that are protected in the repo
+        const passed = protectedBranchNames.filter((n) => policyBranchNames.includes(n));
+        // Failed buckets per requirement
+        const failed = {
+            not_protected: nonProtectedBranches,
+            non_existent: nonExistentBranches,
+        };
+        // Info = protected branches in repo that are NOT declared in policy
+        const extraProtected = protectedBranchNames.filter((n) => !policyBranchNames.includes(n));
+        const info = {
+            extra_protected_branches: extraProtected,
+        };
+        const pass = failed.not_protected.length === 0 && failed.non_existent.length === 0;
+        const data = {
+            passed,
+            failed,
+            info,
+        };
         return { name, pass, data };
     }
     createResultRequirePullRequest(results) {
-        let name = "Branch Protection - Pull Request Settings";
-        let pass = true;
-        let data = results;
-        if (Object.keys(data).length === 0 && data.constructor === Object) {
-            // data is an empty object, so there are no branch protection rules defined
-            pass = false;
-        }
-        //for each branch, check if all the rules are satisfied
-        for (const branch in data) {
-            if (data[branch].error) {
-                pass = false;
-                break;
-            }
-            const branchResults = data[branch];
-            const branchPass = Object.values(branchResults).every((value) => value);
+        const name = "Branch Protection - Pull Request Settings";
+        // Determine branches that passed all PR settings
+        const passed = Object.entries(results)
+            .filter(([_, branchResults]) => {
+            if (!branchResults || branchResults.error)
+                return false;
+            // Consider only top-level booleans as in previous implementation
+            return Object.values(branchResults).every((value) => !!value);
+        })
+            .map(([branch]) => branch);
+        // Collect rules failures for protected branches that didn't pass
+        const rules_not_satisfied = {};
+        Object.entries(results).forEach(([branch, branchResults]) => {
+            if (!branchResults || branchResults.error)
+                return;
+            const branchPass = Object.values(branchResults).every((value) => !!value);
             if (!branchPass) {
-                pass = false;
-                break;
+                rules_not_satisfied[branch] = branchResults;
             }
-        }
+        });
+        // Failed should be a direct map of branch -> failed details (no wrapper)
+        const failed = rules_not_satisfied;
+        const pass = Object.keys(failed).length === 0;
+        // Info: branches that are protected but have no PR rules configured
+        const no_pr_rules = Object.entries(results)
+            .filter(([_, branchResults]) => !!branchResults?.error)
+            .map(([branch]) => branch);
+        const info = {};
+        if (no_pr_rules.length > 0)
+            info.no_pr_rules = no_pr_rules;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
     getProtectedBranchesToCheck(branchesToCheck, protectedBranches) {
@@ -48926,34 +49038,21 @@ class GHASChecks {
     }
     checkRepositoryGHASstatus() {
         logger_1.logger.debug(`Checking GHAS status for ${this.repository.owner}/${this.repository.name}`);
-        if (this.policy.advanced_security.ghas) {
-            return this.getStatusForFeature("advanced_security");
-        }
+        return this.getStatusForFeature("advanced_security");
     }
     checkRepositorySecretScanning() {
-        if (this.policy.advanced_security.secret_scanning) {
-            return this.getStatusForFeature("secret_scanning");
-        }
+        return this.getStatusForFeature("secret_scanning");
     }
     checkRepositorySecretScanningPushProtection() {
-        if (this.policy.advanced_security.secret_scanning_push_protection) {
-            return this.getStatusForFeature("secret_scanning_push_protection");
-        }
+        return this.getStatusForFeature("secret_scanning_push_protection");
     }
     checkRepositorySecretScanningValidityChecks() {
-        if (this.policy.advanced_security.secret_scanning_validity_check) {
-            return this.getStatusForFeature("secret_scanning_validity_checks");
-        }
+        return this.getStatusForFeature("secret_scanning_validity_checks");
     }
     async checkRepositoryCodeScanning() {
         try {
-            if (this.policy.advanced_security.code_scanning) {
-                const recentAnalysis = await (0, Repositories_1.getRepositoryCodeScanningAnalysis)(this.repository.owner, this.repository.name);
-                if (recentAnalysis.length > 0) {
-                    return true;
-                }
-            }
-            return false;
+            const recentAnalysis = await (0, Repositories_1.getRepositoryCodeScanningAnalysis)(this.repository.owner, this.repository.name);
+            return recentAnalysis.length > 0;
         }
         catch (error) {
             throw new Error(`Error in checkRepositoryCodeScanning: ${error}`);
@@ -48982,42 +49081,46 @@ class GHASChecks {
         }
     }
     async checkRepositoryDependabotAlerts() {
-        if (this.policy.advanced_security.dependabot_alerts) {
-            const dependabot = await (0, Repositories_1.getRepoDependabotAlerts)(this.repository.owner, this.repository.name);
-            if (dependabot) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
+        const dependabot = await (0, Repositories_1.getRepoDependabotAlerts)(this.repository.owner, this.repository.name);
+        return !!dependabot;
     }
     async checkRepositoryDependabotSecurityUpdates() {
-        if (this.policy.advanced_security.dependabot_security_updates) {
-            const dependabotSecurityUpdates = await (0, Repositories_1.getRepoDependabotSecurityUpdates)(this.repository.owner, this.repository.name);
-            if (dependabotSecurityUpdates) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
+        const dependabotSecurityUpdates = await (0, Repositories_1.getRepoDependabotSecurityUpdates)(this.repository.owner, this.repository.name);
+        return !!dependabotSecurityUpdates;
     }
     async evaluate() {
-        const checks = {
-            ghas: this.checkRepositoryGHASstatus(),
-            secret_scanning: this.checkRepositorySecretScanning(),
-            secret_scanning_push_protection: this.checkRepositorySecretScanningPushProtection(),
-            secret_scanning_validity_check: this.checkRepositorySecretScanningValidityChecks(),
-            code_scanning: await this.checkRepositoryCodeScanning(),
-            dependabot: await this.checkRepositoryDependabotAlerts(),
-            dependabot_security_updates: await this.checkRepositoryDependabotSecurityUpdates(),
+        const asPolicy = this.policy?.advanced_security || {};
+        const evaluators = {
+            ghas: () => this.checkRepositoryGHASstatus(),
+            secret_scanning: () => this.checkRepositorySecretScanning(),
+            secret_scanning_push_protection: () => this.checkRepositorySecretScanningPushProtection(),
+            secret_scanning_validity_check: () => this.checkRepositorySecretScanningValidityChecks(),
+            code_scanning: () => this.checkRepositoryCodeScanning(),
+            dependabot_alerts: () => this.checkRepositoryDependabotAlerts(),
+            dependabot_security_updates: () => this.checkRepositoryDependabotSecurityUpdates(),
         };
-        let name = "GHAS Checks";
-        let pass = false;
-        let data = {};
-        pass = Object.values(checks).every((check) => check === true);
-        data = checks;
+        const keysToEvaluate = Object.keys(asPolicy).filter((k) => k in evaluators && typeof asPolicy[k] === "boolean");
+        const passed = [];
+        const failed = [];
+        await Promise.all(keysToEvaluate.map(async (key) => {
+            try {
+                const actual = await evaluators[key]();
+                const desired = !!asPolicy[key];
+                if (actual === desired) {
+                    passed.push(key);
+                }
+                else {
+                    failed.push(key);
+                }
+            }
+            catch (e) {
+                failed.push(key);
+                logger_1.logger.debug(`GHAS check error for ${key}: ${e}`);
+            }
+        }));
+        const name = "GHAS Checks";
+        const pass = failed.length === 0;
+        const data = { passed, failed, info: {} };
         return { name, pass, data };
     }
 }
@@ -49044,41 +49147,68 @@ class RunnersChecks {
     // check whether the repository has self hosted runners enabled
     async checkRunnersPermissions() {
         const runners = await (0, Runners_1.getRepoRunners)(this.repository.owner, this.repository.name);
-        const runnersAllowed = this.policy.runners.self_hosted_allowed
-            ? true
-            : runners.total_count === 0;
-        const runnersPolicySelfHostedOs = this.policy.runners.self_hosted_allowed_os;
-        const notAllowedOs = [];
-        //for each runner in runners check if the os is one of the allowed os in the policy, if not return false
-        if (runnersPolicySelfHostedOs !== undefined &&
-            Array.isArray(runnersPolicySelfHostedOs)) {
-            runners.runners.forEach((runner) => {
-                if (!runnersPolicySelfHostedOs.includes(runner.os)) {
-                    notAllowedOs.push(runner);
+        const policy = this.policy.runners || {};
+        const passed = [];
+        const failed = {};
+        const info = { runners_defined: runners.total_count };
+        // self_hosted_allowed: if false in policy, there must be zero runners
+        if (typeof policy.self_hosted_allowed === "boolean") {
+            if (policy.self_hosted_allowed === false) {
+                if (runners.total_count === 0) {
+                    passed.push("self_hosted_allowed");
                 }
-            });
+                else {
+                    failed.self_hosted_allowed = false;
+                }
+            }
+            else {
+                // Policy allows self-hosted; presence is fine
+                passed.push("self_hosted_allowed");
+            }
         }
-        return this.createResult(runnersAllowed, runners.total_count, notAllowedOs);
+        // self_hosted_allowed_os: if provided, ensure all runner OS are whitelisted
+        const allowedOs = policy.self_hosted_allowed_os;
+        if (Array.isArray(allowedOs)) {
+            const osViolations = (runners.runners || [])
+                .filter((r) => !allowedOs.includes(r.os))
+                .map((r) => ({ id: r.id, name: r.name, os: r.os }));
+            if (osViolations.length === 0) {
+                passed.push("self_hosted_allowed_os");
+            }
+            else {
+                failed.self_hosted_allowed_os = osViolations;
+            }
+        }
+        // self_hosted_allowed_labels: if provided, ensure each runner's labels are subset of allowed
+        const allowedLabels = policy.self_hosted_allowed_labels;
+        if (Array.isArray(allowedLabels)) {
+            const labelViolations = (runners.runners || [])
+                .map((r) => {
+                const runnerLabels = (r.labels || []).map((l) => l.name || l);
+                const disallowed = runnerLabels.filter((lbl) => !allowedLabels.includes(lbl));
+                return disallowed.length > 0
+                    ? {
+                        id: r.id,
+                        name: r.name,
+                        os: r.os,
+                        disallowed_labels: disallowed,
+                    }
+                    : null;
+            })
+                .filter((v) => v !== null);
+            if (labelViolations.length === 0) {
+                passed.push("self_hosted_allowed_labels");
+            }
+            else {
+                failed.self_hosted_allowed_labels = labelViolations;
+            }
+        }
+        return this.createResult(passed, failed, info);
     }
-    createResult(self_hosted_runners, self_hosted_runners_defined, self_hosted_runners_os_not_allowed) {
-        let name = "Runners Check";
-        let pass = false;
-        let data = {};
-        if (self_hosted_runners &&
-            self_hosted_runners_os_not_allowed.length === 0) {
-            pass = true;
-            data = {
-                self_hosted_runners_in_policy: self_hosted_runners,
-                self_hosted_runners_defined,
-            };
-        }
-        else {
-            data = {
-                self_hosted_runners_in_policy: self_hosted_runners,
-                self_hosted_runners_defined,
-                self_hosted_runners_os_not_allowed,
-            };
-        }
+    createResult(passed, failed, info) {
+        const name = "Runners Check";
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }
@@ -49106,11 +49236,11 @@ class WebHooksChecks {
     async checkWebHooks() {
         const webhooks = await (0, WebHooks_1.getWebHooks)(this.repository.owner, this.repository.name);
         // for each webhook in webhooks extract the domain and check if it is in the allowed list in the policy, if not return false
-        const allowedDomains = this.policy.webhooks.allowed_domains;
+        const allowedDomains = this.policy.webhooks.allowed_domains || [];
         const notAllowedDomains = [];
         webhooks.forEach((webhook) => {
             const domain = webhook.config.url.split("/")[2];
-            if (!allowedDomains.includes(domain)) {
+            if (allowedDomains.length > 0 && !allowedDomains.includes(domain)) {
                 notAllowedDomains.push(webhook);
             }
         });
@@ -49123,14 +49253,13 @@ class WebHooksChecks {
             }
         });
         // for each webhook in webhooks check that events are in the allowed list in the policy, if not return false
-        const allowedEvents = this.policy.webhooks.allowed_events;
+        const allowedEvents = this.policy.webhooks.allowed_events || [];
         const notAllowedEvents = [];
         webhooks.forEach((webhook) => {
-            webhook.events.forEach((event) => {
-                if (!allowedEvents.includes(event)) {
-                    notAllowedEvents.push(webhook);
-                }
-            });
+            const extraEvents = (webhook.events || []).filter((event) => allowedEvents.length > 0 && !allowedEvents.includes(event));
+            if (extraEvents.length > 0) {
+                notAllowedEvents.push({ webhook, extraEvents });
+            }
         });
         //for each webhook use the getWebHookConfig function to get the config of the webhook and check if the secret is set, if not return false
         const notAllowedSecret = [];
@@ -49146,50 +49275,76 @@ class WebHooksChecks {
         return this.createResult(webhooks, notAllowedDomains, insecureSSL, notAllowedEvents, notAllowedSecret);
     }
     createResult(webhooks, not_allowed_domains, insecure_ssl, not_allowed_events, not_allowed_secret) {
-        let name = "WebHooks Check";
-        let pass = false;
-        let data = {};
-        if (not_allowed_domains.length === 0 &&
-            insecure_ssl.length === 0 &&
-            not_allowed_events.length === 0 &&
-            not_allowed_secret.length === 0) {
-            pass = true;
-            data = { webhooks: webhooks };
+        const name = "WebHooks Check";
+        const passed = [];
+        const failed = {};
+        const info = { total_webhooks: webhooks.length };
+        if (not_allowed_domains.length === 0) {
+            passed.push("allowed_domains");
         }
-        if (not_allowed_domains.length > 0) {
-            pass = false;
-            //for each webhook in not_allowed_domains, extract the url and the name of the webhook and add it to the data object
+        else {
             not_allowed_domains.forEach((webhook) => {
-                data[webhook.name] = { not_allowed_domains: webhook.config.url };
+                if (!failed[webhook.name]) {
+                    failed[webhook.name] = {
+                        id: webhook.id,
+                        url: webhook.config.url,
+                        checks_failed: [],
+                    };
+                }
+                failed[webhook.name].not_allowed_domains = webhook.config.url;
+                failed[webhook.name].checks_failed.push("allowed_domains");
             });
         }
-        if (insecure_ssl.length > 0) {
-            pass = false;
-            //for each webhook in insecure_ssl, extract the url and the name of the webhook and add it to the data object
+        if (insecure_ssl.length === 0) {
+            passed.push("allow_insecure_ssl");
+        }
+        else {
             insecure_ssl.forEach((webhook) => {
-                data[webhook.name] = {
-                    ...data[webhook.name],
-                    allow_insecure_ssl: true,
-                };
+                if (!failed[webhook.name]) {
+                    failed[webhook.name] = {
+                        id: webhook.id,
+                        url: webhook.config.url,
+                        checks_failed: [],
+                    };
+                }
+                failed[webhook.name].allow_insecure_ssl = true;
+                failed[webhook.name].checks_failed.push("allow_insecure_ssl");
             });
         }
-        if (not_allowed_events.length > 0) {
-            pass = false;
-            //for each webhook in not_allowed_events, extract the url, the name and the events of the webhook and add it to the data object
-            not_allowed_events.forEach((webhook) => {
-                data[webhook.name] = {
-                    ...data[webhook.name],
-                    not_allowed_events: webhook.events,
-                };
+        if (not_allowed_events.length === 0) {
+            passed.push("allowed_events");
+        }
+        else {
+            not_allowed_events.forEach(({ webhook, extraEvents }) => {
+                if (!failed[webhook.name]) {
+                    failed[webhook.name] = {
+                        id: webhook.id,
+                        url: webhook.config.url,
+                        checks_failed: [],
+                    };
+                }
+                failed[webhook.name].not_allowed_events = extraEvents;
+                failed[webhook.name].checks_failed.push("allowed_events");
             });
         }
-        if (not_allowed_secret.length > 0) {
-            pass = false;
-            //for each webhook in not_allowed_secret, extract the url, the name and the secret of the webhook and add it to the data object
+        if (not_allowed_secret.length === 0) {
+            passed.push("mandatory_secret");
+        }
+        else {
             not_allowed_secret.forEach((webhook) => {
-                data[webhook.name] = { ...data[webhook.name], mandatory_secret: false };
+                if (!failed[webhook.name]) {
+                    failed[webhook.name] = {
+                        id: webhook.id,
+                        url: webhook.config.url,
+                        checks_failed: [],
+                    };
+                }
+                failed[webhook.name].mandatory_secret = false;
+                failed[webhook.name].checks_failed.push("mandatory_secret");
             });
         }
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }
@@ -50297,7 +50452,7 @@ function printEnhancedCheckResult(checkResult, isOrgCheck = false, policyDir = "
     const metadata = (0, checkMetadata_1.getCheckMetadata)(checkResult.name, isOrgCheck);
     // Print GitHub documentation link
     if (metadata?.githubDocs) {
-        logger_1.logger.info(`  ${chalk_1.default.blue("📘 GitHub Docs:")} ${chalk_1.default.cyan(metadata.githubDocs)}`);
+        logger_1.logger.info(`  ${chalk_1.default.blue("GitHub Docs:")} ${chalk_1.default.cyan(metadata.githubDocs)}`);
     }
     // For failed checks, print threat model and additional resources
     if (checkResult.pass === false) {
@@ -50306,18 +50461,18 @@ function printEnhancedCheckResult(checkResult, isOrgCheck = false, policyDir = "
             const threatFile = isOrgCheck
                 ? "organization.threats.md"
                 : "repository.threats.md";
-            logger_1.logger.info(`  ${chalk_1.default.red("⚠️  Threat Model:")} See "${metadata.threatModelSection}" in ${threatFile}`);
+            logger_1.logger.info(`  ${chalk_1.default.red("GitArmor Threat Model:")} See "${metadata.threatModelSection}" in ${threatFile}`);
         }
         // Print SLSA.dev threats
         if (metadata?.slsaThreats && metadata.slsaThreats.length > 0) {
-            logger_1.logger.info(`  ${chalk_1.default.magenta("🔗 SLSA.dev Threats:")}`);
+            logger_1.logger.info(`  ${chalk_1.default.magenta("SLSA.dev Threats:")}`);
             metadata.slsaThreats.forEach((threat) => {
                 logger_1.logger.info(`     - ${chalk_1.default.cyan(threat)}`);
             });
         }
         // Print MS DevOps Threat Matrix
         if (metadata?.msDevOpsThreats && metadata.msDevOpsThreats.length > 0) {
-            logger_1.logger.info(`  ${chalk_1.default.magenta("🔗 MS DevOps Threat Matrix:")}`);
+            logger_1.logger.info(`  ${chalk_1.default.magenta("MS DevOps Threat Matrix:")}`);
             metadata.msDevOpsThreats.forEach((threat) => {
                 logger_1.logger.info(`     - ${chalk_1.default.cyan(threat)}`);
             });

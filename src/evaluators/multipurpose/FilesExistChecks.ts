@@ -26,21 +26,25 @@ export class FilesExistChecks {
     const missingFiles = this.policy.file_exists.filter(
       (_: string, index: number) => !fileExistenceResults[index],
     );
+    const existingFiles = this.policy.file_exists.filter(
+      (_: string, index: number) => fileExistenceResults[index],
+    );
 
-    return this.createResult(missingFiles);
+    return this.createResult(missingFiles, existingFiles);
   }
 
-  private createResult(missingFiles: string[]): CheckResult {
-    let name = "Files Exist Check";
-    let pass = false;
-    let data = {};
+  private createResult(
+    missingFiles: string[],
+    existingFiles: string[],
+  ): CheckResult {
+    const name = "Files Exist Check";
+    const pass = missingFiles.length === 0;
 
-    if (missingFiles.length === 0) {
-      pass = true;
-      data = { allFilesExist: true };
-    } else {
-      data = { missingFiles };
-    }
+    const data = {
+      passed: existingFiles,
+      failed: missingFiles,
+      info: {},
+    };
 
     return { name, pass, data };
   }
