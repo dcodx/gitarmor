@@ -133,7 +133,7 @@ jobs:
 
 You can use the following example workflow files as inspiration for your own implementation:
 - [GitArmor workflow for on-demand scans](.github/workflows/gitarmor-on-demand.yml)
-- [GitArmor workflow for periodic scans](.github/workflows/gitarmor-periodic.yml)
+- [GitArmor workflow for periodic scans](.github/workflows/gitarmor-scheduled.yml)
 
 For the token we recommend using [create-github-app-token](https://github.com/actions/create-github-app-token) and creating a GitHub App Installation Access Token.
 
