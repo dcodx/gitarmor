@@ -75,27 +75,42 @@ class OrgGHASChecks {
         return { result: true, teams: { securityTeams: [], policyTeams: [] } };
     }
     async evaluate() {
-        let checks = {
-            automaticDependencyGraph: this.checkAutomaticDependencyGraph(),
-            automaticDependabotAlerts: this.checkAutomaticDependabotAlerts(),
-            automaticDependabotSecurityUpdates: this.checkAutomaticDependabotSecurityUpdates(),
-            automaticGHASEnablement: this.checkAutomaticGHASEnablement(),
-            automaticSecretScanning: this.checkAutomaticSecretScanning(),
-            automaticPushProtection: this.checkAutomaticPushProtection(),
-            automaticSecretScanningValidityCheck: this.checkAutomaticSecretScanningValidityCheck(),
-            // automaticCodeqlExtended: this.checkAutomaticCodeQLExtended(),
-            // automaticCodeqlAutofix: this.checkAutomaticCodeQLAutofix(),
-            securityManagerTeams: false,
+        const name = "Org GHAS Checks";
+        const passed = [];
+        const failed = {};
+        const info = {};
+        const desired = this.policy?.advanced_security || {};
+        const compare = (key, actual, expected) => {
+            if (typeof expected !== "boolean")
+                return; // not declared in policy
+            if (actual === expected)
+                passed.push(key);
+            else
+                failed[key] = false;
         };
-        let securityManagerTeamsCheck = await this.checkSecurityManagerTeams();
-        checks.securityManagerTeams = securityManagerTeamsCheck.result;
-        let name = "Org GHAS Checks";
-        let pass = false;
-        let data = {
-            ...checks,
-            securityManagerTeamsTeams: securityManagerTeamsCheck.teams,
-        };
-        pass = Object.values(checks).every((check) => check === true);
+        compare("automatic_dependency_graph", this.organizationData.dependency_graph_enabled_for_new_repositories, desired.automatic_dependency_graph);
+        compare("automatic_dependabot_alerts", this.organizationData.dependabot_alerts_enabled_for_new_repositories, desired.automatic_dependabot_alerts);
+        compare("automatic_dependabot_security_updates", this.organizationData
+            .dependabot_security_updates_enabled_for_new_repositories, desired.automatic_dependabot_security_updates);
+        compare("automatic_ghas_enablement", this.organizationData.advanced_security_enabled_for_new_repositories, desired.automatic_ghas_enablement);
+        compare("automatic_secret_scanning", this.organizationData.secret_scanning_enabled_for_new_repositories, desired.automatic_secret_scanning);
+        compare("automatic_push_protection", this.organizationData
+            .secret_scanning_push_protection_enabled_for_new_repositories, desired.automatic_push_protection);
+        compare("automatic_secret_scanning_validity_check", this.organizationData.secret_scanning_validity_checks_enabled, desired.automatic_secret_scanning_validity_check);
+        const securityManagerTeamsCheck = await this.checkSecurityManagerTeams();
+        if (Array.isArray(desired.security_manager_teams) &&
+            desired.security_manager_teams.length > 0) {
+            if (securityManagerTeamsCheck.result)
+                passed.push("security_manager_teams");
+            else
+                failed.security_manager_teams = {
+                    policy_teams: desired.security_manager_teams,
+                    actual_teams: securityManagerTeamsCheck.teams.securityTeams,
+                };
+        }
+        info.security_manager_teams_details = securityManagerTeamsCheck.teams;
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }

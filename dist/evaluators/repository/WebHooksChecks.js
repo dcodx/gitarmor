@@ -13,11 +13,11 @@ class WebHooksChecks {
     async checkWebHooks() {
         const webhooks = await (0, WebHooks_1.getWebHooks)(this.repository.owner, this.repository.name);
         // for each webhook in webhooks extract the domain and check if it is in the allowed list in the policy, if not return false
-        const allowedDomains = this.policy.webhooks.allowed_domains;
+        const allowedDomains = this.policy.webhooks.allowed_domains || [];
         const notAllowedDomains = [];
         webhooks.forEach((webhook) => {
             const domain = webhook.config.url.split("/")[2];
-            if (!allowedDomains.includes(domain)) {
+            if (allowedDomains.length > 0 && !allowedDomains.includes(domain)) {
                 notAllowedDomains.push(webhook);
             }
         });
@@ -30,14 +30,13 @@ class WebHooksChecks {
             }
         });
         // for each webhook in webhooks check that events are in the allowed list in the policy, if not return false
-        const allowedEvents = this.policy.webhooks.allowed_events;
+        const allowedEvents = this.policy.webhooks.allowed_events || [];
         const notAllowedEvents = [];
         webhooks.forEach((webhook) => {
-            webhook.events.forEach((event) => {
-                if (!allowedEvents.includes(event)) {
-                    notAllowedEvents.push(webhook);
-                }
-            });
+            const extraEvents = (webhook.events || []).filter((event) => allowedEvents.length > 0 && !allowedEvents.includes(event));
+            if (extraEvents.length > 0) {
+                notAllowedEvents.push({ webhook, extraEvents });
+            }
         });
         //for each webhook use the getWebHookConfig function to get the config of the webhook and check if the secret is set, if not return false
         const notAllowedSecret = [];
@@ -53,50 +52,76 @@ class WebHooksChecks {
         return this.createResult(webhooks, notAllowedDomains, insecureSSL, notAllowedEvents, notAllowedSecret);
     }
     createResult(webhooks, not_allowed_domains, insecure_ssl, not_allowed_events, not_allowed_secret) {
-        let name = "WebHooks Check";
-        let pass = false;
-        let data = {};
-        if (not_allowed_domains.length === 0 &&
-            insecure_ssl.length === 0 &&
-            not_allowed_events.length === 0 &&
-            not_allowed_secret.length === 0) {
-            pass = true;
-            data = { webhooks: webhooks };
+        const name = "WebHooks Check";
+        const passed = [];
+        const failed = {};
+        const info = { total_webhooks: webhooks.length };
+        if (not_allowed_domains.length === 0) {
+            passed.push("allowed_domains");
         }
-        if (not_allowed_domains.length > 0) {
-            pass = false;
-            //for each webhook in not_allowed_domains, extract the url and the name of the webhook and add it to the data object
+        else {
             not_allowed_domains.forEach((webhook) => {
-                data[webhook.name] = { not_allowed_domains: webhook.config.url };
+                if (!failed[webhook.name]) {
+                    failed[webhook.name] = {
+                        id: webhook.id,
+                        url: webhook.config.url,
+                        checks_failed: [],
+                    };
+                }
+                failed[webhook.name].not_allowed_domains = webhook.config.url;
+                failed[webhook.name].checks_failed.push("allowed_domains");
             });
         }
-        if (insecure_ssl.length > 0) {
-            pass = false;
-            //for each webhook in insecure_ssl, extract the url and the name of the webhook and add it to the data object
+        if (insecure_ssl.length === 0) {
+            passed.push("allow_insecure_ssl");
+        }
+        else {
             insecure_ssl.forEach((webhook) => {
-                data[webhook.name] = {
-                    ...data[webhook.name],
-                    allow_insecure_ssl: true,
-                };
+                if (!failed[webhook.name]) {
+                    failed[webhook.name] = {
+                        id: webhook.id,
+                        url: webhook.config.url,
+                        checks_failed: [],
+                    };
+                }
+                failed[webhook.name].allow_insecure_ssl = true;
+                failed[webhook.name].checks_failed.push("allow_insecure_ssl");
             });
         }
-        if (not_allowed_events.length > 0) {
-            pass = false;
-            //for each webhook in not_allowed_events, extract the url, the name and the events of the webhook and add it to the data object
-            not_allowed_events.forEach((webhook) => {
-                data[webhook.name] = {
-                    ...data[webhook.name],
-                    not_allowed_events: webhook.events,
-                };
+        if (not_allowed_events.length === 0) {
+            passed.push("allowed_events");
+        }
+        else {
+            not_allowed_events.forEach(({ webhook, extraEvents }) => {
+                if (!failed[webhook.name]) {
+                    failed[webhook.name] = {
+                        id: webhook.id,
+                        url: webhook.config.url,
+                        checks_failed: [],
+                    };
+                }
+                failed[webhook.name].not_allowed_events = extraEvents;
+                failed[webhook.name].checks_failed.push("allowed_events");
             });
         }
-        if (not_allowed_secret.length > 0) {
-            pass = false;
-            //for each webhook in not_allowed_secret, extract the url, the name and the secret of the webhook and add it to the data object
+        if (not_allowed_secret.length === 0) {
+            passed.push("mandatory_secret");
+        }
+        else {
             not_allowed_secret.forEach((webhook) => {
-                data[webhook.name] = { ...data[webhook.name], mandatory_secret: false };
+                if (!failed[webhook.name]) {
+                    failed[webhook.name] = {
+                        id: webhook.id,
+                        url: webhook.config.url,
+                        checks_failed: [],
+                    };
+                }
+                failed[webhook.name].mandatory_secret = false;
+                failed[webhook.name].checks_failed.push("mandatory_secret");
             });
         }
+        const pass = Object.keys(failed).length === 0;
+        const data = { passed, failed, info };
         return { name, pass, data };
     }
 }

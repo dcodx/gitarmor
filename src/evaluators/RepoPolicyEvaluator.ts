@@ -10,6 +10,10 @@ import { WorkflowsChecks } from "./repository/WorkflowsChecks";
 import { RunnersChecks } from "./repository/RunnersChecks";
 import { WebHooksChecks } from "./repository/WebHooksChecks";
 import { AdminsChecks } from "./repository/AdminsChecks";
+import {
+  printEnhancedCheckResult,
+  printResultsHeader,
+} from "../utils/outputFormatter";
 
 // This class is the main Repository evaluator. It evaluates the policy for a given repository.
 export class RepoPolicyEvaluator {
@@ -160,19 +164,11 @@ export class RepoPolicyEvaluator {
   // Run webhook checks
 
   public printCheckResults() {
-    logger.info(
-      "------------------------------------------------------------------------",
-    );
-    logger.info(`Repository policy results - ${this.getFullRepositoryName()}:`);
-    logger.info(
-      "------------------------------------------------------------------------",
+    printResultsHeader(
+      `Repository Policy Results - ${this.getFullRepositoryName()}`,
     );
     this.repositoryCheckResults.forEach((checkResult) => {
-      const emoji =
-        checkResult.pass === null ? "😐" : checkResult.pass ? "✅" : "❌";
-      logger.info(
-        `[${emoji}] Check: ${checkResult.name} - Pass: ${checkResult.pass} \n${JSON.stringify(checkResult.data, null, 3)}`,
-      );
+      printEnhancedCheckResult(checkResult, false);
     });
   }
 

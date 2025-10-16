@@ -114,34 +114,31 @@ export class ActionsChecks {
     sha_pinning_required?: boolean,
     sha_pinning_required_policy?: boolean,
   ): CheckResult {
-    let name = "Actions Check";
-    let pass = false;
-    let data = {};
+    const name = "Actions Check";
+    const passed: string[] = [];
+    const failed: Record<string, any> = {};
 
-    // Check sha_pinning_required if it's defined in the policy
-    const shaPinningMatches =
-      sha_pinning_required_policy === undefined ||
-      sha_pinning_required === sha_pinning_required_policy;
-
-    if (actions_permissions && shaPinningMatches) {
-      pass = true;
-      data = {
-        actions_permissions,
-        github_allowed_actions,
-        policy_allowed_actions,
-        sha_pinning_required,
-        sha_pinning_required_policy,
-      };
+    // Permission comparison
+    if (actions_permissions) {
+      passed.push("permission");
     } else {
-      data = {
-        actions_permissions,
-        github_allowed_actions,
-        policy_allowed_actions,
-        sha_pinning_required,
-        sha_pinning_required_policy,
+      failed.permission = {
+        actual: github_allowed_actions,
+        expected: policy_allowed_actions,
       };
     }
 
+    // SHA pinning comparison (only if policy specifies it)
+    if (typeof sha_pinning_required_policy === "boolean") {
+      if (sha_pinning_required === sha_pinning_required_policy) {
+        passed.push("sha_pinning_required");
+      } else {
+        failed.sha_pinning_required = false;
+      }
+    }
+
+    const pass = Object.keys(failed).length === 0;
+    const data = { passed, failed, info: {} };
     return { name, pass, data };
   }
 
@@ -155,50 +152,66 @@ export class ActionsChecks {
     sha_pinning_required?: boolean,
     sha_pinning_required_policy?: boolean,
   ) {
-    let name = "Actions Check";
-    let pass = false;
-    let data = {};
+    const name = "Actions Check";
+    const passed: string[] = [];
+    const failed: Record<string, any> = {};
 
-    // Check sha_pinning_required if it's defined in the policy
-    const shaPinningMatches =
-      sha_pinning_required_policy === undefined ||
-      sha_pinning_required === sha_pinning_required_policy;
-
-    if (
-      actions_permissions &&
-      github_owned_allowed &&
-      verified_allowed &&
-      shaPinningMatches
-    ) {
-      pass = true;
-      data = {
-        actions_permissions,
-        github_allowed_actions,
-        github_owned_allowed,
-        verified_allowed,
-        patterns_allowed_github,
-        patterns_allowed_policy,
-        sha_pinning_required,
-        sha_pinning_required_policy,
-      };
+    // Permission must be 'selected'
+    if (actions_permissions) {
+      passed.push("permission");
     } else {
-      data = {
-        actions_permissions,
-        github_allowed_actions,
-        github_owned_allowed,
-        verified_allowed,
-        patterns_allowed_github,
-        patterns_allowed_policy,
-        sha_pinning_required,
-        sha_pinning_required_policy,
+      failed.permission = {
+        actual: github_allowed_actions,
+        expected: "selected",
       };
     }
 
-    return {
-      name,
-      pass,
-      data,
-    };
+    // github_owned_allowed
+    if (github_owned_allowed) {
+      passed.push("github_owned_allowed");
+    } else {
+      failed.github_owned_allowed = {
+        actual: false,
+        expected: true,
+      };
+    }
+
+    // verified_allowed
+    if (verified_allowed) {
+      passed.push("verified_allowed");
+    } else {
+      failed.verified_allowed = {
+        actual: false,
+        expected: true,
+      };
+    }
+
+    // patterns_allowed: repo patterns must be subset of policy patterns
+    const missing_in_policy = patterns_allowed_github.filter(
+      (p) => !patterns_allowed_policy.includes(p),
+    );
+    if (missing_in_policy.length === 0) {
+      passed.push("patterns_allowed");
+    } else {
+      failed.patterns_allowed = {
+        missing_in_policy,
+        actual: patterns_allowed_github,
+        expected_superset: patterns_allowed_policy,
+      };
+    }
+
+    // SHA pinning comparison (only if policy specifies it)
+    if (typeof sha_pinning_required_policy === "boolean") {
+      if (sha_pinning_required === sha_pinning_required_policy) {
+        passed.push("sha_pinning_required");
+      } else {
+        failed.sha_pinning_required = false;
+      }
+    }
+
+    const pass = Object.keys(failed).length === 0;
+    const data = { passed, failed, info: {} };
+    return { name, pass, data };
   }
 
   // check whether the actions used in the workflows declared in a repository use the pinning feature as specified in the policy

@@ -21,19 +21,17 @@ class FilesExistChecks {
         });
         const fileExistenceResults = await Promise.all(fileExistenceChecks);
         const missingFiles = this.policy.file_exists.filter((_, index) => !fileExistenceResults[index]);
-        return this.createResult(missingFiles);
+        const existingFiles = this.policy.file_exists.filter((_, index) => fileExistenceResults[index]);
+        return this.createResult(missingFiles, existingFiles);
     }
-    createResult(missingFiles) {
-        let name = "Files Exist Check";
-        let pass = false;
-        let data = {};
-        if (missingFiles.length === 0) {
-            pass = true;
-            data = { allFilesExist: true };
-        }
-        else {
-            data = { missingFiles };
-        }
+    createResult(missingFiles, existingFiles) {
+        const name = "Files Exist Check";
+        const pass = missingFiles.length === 0;
+        const data = {
+            passed: existingFiles,
+            failed: missingFiles,
+            info: {},
+        };
         return { name, pass, data };
     }
 }

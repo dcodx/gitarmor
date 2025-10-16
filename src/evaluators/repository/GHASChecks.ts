@@ -22,42 +22,28 @@ export class GHASChecks {
     logger.debug(
       `Checking GHAS status for ${this.repository.owner}/${this.repository.name}`,
     );
-    if (this.policy.advanced_security.ghas) {
-      return this.getStatusForFeature("advanced_security");
-    }
+    return this.getStatusForFeature("advanced_security");
   }
 
   private checkRepositorySecretScanning() {
-    if (this.policy.advanced_security.secret_scanning) {
-      return this.getStatusForFeature("secret_scanning");
-    }
+    return this.getStatusForFeature("secret_scanning");
   }
 
   private checkRepositorySecretScanningPushProtection() {
-    if (this.policy.advanced_security.secret_scanning_push_protection) {
-      return this.getStatusForFeature("secret_scanning_push_protection");
-    }
+    return this.getStatusForFeature("secret_scanning_push_protection");
   }
 
   private checkRepositorySecretScanningValidityChecks() {
-    if (this.policy.advanced_security.secret_scanning_validity_check) {
-      return this.getStatusForFeature("secret_scanning_validity_checks");
-    }
+    return this.getStatusForFeature("secret_scanning_validity_checks");
   }
 
   private async checkRepositoryCodeScanning() {
     try {
-      if (this.policy.advanced_security.code_scanning) {
-        const recentAnalysis = await getRepositoryCodeScanningAnalysis(
-          this.repository.owner,
-          this.repository.name,
-        );
-
-        if (recentAnalysis.length > 0) {
-          return true;
-        }
-      }
-      return false;
+      const recentAnalysis = await getRepositoryCodeScanningAnalysis(
+        this.repository.owner,
+        this.repository.name,
+      );
+      return recentAnalysis.length > 0;
     } catch (error) {
       throw new Error(`Error in checkRepositoryCodeScanning: ${error}`);
     }
@@ -86,52 +72,64 @@ export class GHASChecks {
   }
 
   private async checkRepositoryDependabotAlerts() {
-    if (this.policy.advanced_security.dependabot_alerts) {
-      const dependabot = await getRepoDependabotAlerts(
-        this.repository.owner,
-        this.repository.name,
-      );
-      if (dependabot) {
-        return true;
-      } else {
-        return false;
-      }
-    }
+    const dependabot = await getRepoDependabotAlerts(
+      this.repository.owner,
+      this.repository.name,
+    );
+    return !!dependabot;
   }
 
   private async checkRepositoryDependabotSecurityUpdates() {
-    if (this.policy.advanced_security.dependabot_security_updates) {
-      const dependabotSecurityUpdates = await getRepoDependabotSecurityUpdates(
-        this.repository.owner,
-        this.repository.name,
-      );
-      if (dependabotSecurityUpdates) {
-        return true;
-      } else {
-        return false;
-      }
-    }
+    const dependabotSecurityUpdates = await getRepoDependabotSecurityUpdates(
+      this.repository.owner,
+      this.repository.name,
+    );
+    return !!dependabotSecurityUpdates;
   }
 
   public async evaluate(): Promise<CheckResult> {
-    const checks = {
-      ghas: this.checkRepositoryGHASstatus(),
-      secret_scanning: this.checkRepositorySecretScanning(),
-      secret_scanning_push_protection:
+    const asPolicy = this.policy?.advanced_security || {};
+
+    const evaluators: Record<string, () => Promise<boolean> | boolean> = {
+      ghas: () => this.checkRepositoryGHASstatus(),
+      secret_scanning: () => this.checkRepositorySecretScanning(),
+      secret_scanning_push_protection: () =>
         this.checkRepositorySecretScanningPushProtection(),
-      secret_scanning_validity_check:
+      secret_scanning_validity_check: () =>
         this.checkRepositorySecretScanningValidityChecks(),
-      code_scanning: await this.checkRepositoryCodeScanning(),
-      dependabot: await this.checkRepositoryDependabotAlerts(),
-      dependabot_security_updates:
-        await this.checkRepositoryDependabotSecurityUpdates(),
+      code_scanning: () => this.checkRepositoryCodeScanning(),
+      dependabot_alerts: () => this.checkRepositoryDependabotAlerts(),
+      dependabot_security_updates: () =>
+        this.checkRepositoryDependabotSecurityUpdates(),
     };
 
-    let name = "GHAS Checks";
-    let pass = false;
-    let data = {};
-    pass = Object.values(checks).every((check) => check === true);
-    data = checks;
+    const keysToEvaluate = Object.keys(asPolicy).filter(
+      (k) => k in evaluators && typeof asPolicy[k] === "boolean",
+    );
+
+    const passed: string[] = [];
+    const failed: string[] = [];
+
+    await Promise.all(
+      keysToEvaluate.map(async (key) => {
+        try {
+          const actual = await evaluators[key]();
+          const desired = !!asPolicy[key];
+          if (actual === desired) {
+            passed.push(key);
+          } else {
+            failed.push(key);
+          }
+        } catch (e) {
+          failed.push(key);
+          logger.debug(`GHAS check error for ${key}: ${e}`);
+        }
+      }),
+    );
+
+    const name = "GHAS Checks";
+    const pass = failed.length === 0;
+    const data = { passed, failed, info: {} };
 
     return { name, pass, data };
   }

@@ -50,16 +50,55 @@ export class OrgCustomRolesChecks {
   }
 
   public async evaluate(): Promise<CheckResult> {
-    let checks = {
-      customRoles: await this.checkCustomRoles(),
-    };
+    const name = "Org Custom Roles Checks";
+    const passed: string[] = [];
+    const failed: Record<string, any> = {};
+    const info: Record<string, any> = {};
 
-    let name = "Org Custom Roles Checks";
-    let pass = false;
-    let data = {};
-    pass = Object.values(checks).every((check) => check === true);
-    data = checks;
+    if (!this.policy.custom_roles || this.policy.custom_roles.length === 0) {
+      // Nothing to evaluate
+      return { name, pass: true, data: { passed: [], failed: {}, info: {} } };
+    }
 
+    const actual = await getCustomRolesForOrg(this.organization.name);
+    const actualRoles = actual?.custom_roles || [];
+    const actualMap = new Map(actualRoles.map((r: any) => [r.name, r]));
+
+    const missing_roles: string[] = [];
+    const mismatched_roles: Array<{
+      name: string;
+      base_role?: any;
+      missing_permissions?: string[];
+    }> = [];
+
+    for (const policyRole of this.policy.custom_roles) {
+      const match = actualMap.get(policyRole.name);
+      if (!match) {
+        missing_roles.push(policyRole.name);
+        continue;
+      }
+      const baseRoleMatch = match.base_role === policyRole.base_role;
+      const missingPerms = (policyRole.permissions || []).filter(
+        (p: string) => !(match.permissions || []).includes(p),
+      );
+      if (baseRoleMatch && missingPerms.length === 0) {
+        // role fully matches policy
+        // keep a simple indicator under passed
+        passed.push(policyRole.name);
+      } else {
+        mismatched_roles.push({
+          name: policyRole.name,
+          base_role: baseRoleMatch ? undefined : match.base_role,
+          missing_permissions: missingPerms.length ? missingPerms : undefined,
+        });
+      }
+    }
+
+    if (missing_roles.length > 0) failed.missing_roles = missing_roles;
+    if (mismatched_roles.length > 0) failed.mismatched_roles = mismatched_roles;
+
+    const pass = Object.keys(failed).length === 0;
+    const data = { passed, failed, info };
     return { name, pass, data };
   }
 }

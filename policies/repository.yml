@@ -48,6 +48,8 @@ file_disallow:
   - config.xml
   - credentials.json
   - secrets.yml
+  - somesecrets.txt
+  - README
 
 
 advanced_security:
@@ -61,7 +63,7 @@ advanced_security:
   code_scanning: true
 
 actions:
-  permission: selected # all, local_only, selected, none
+  permission: all # all, local_only, selected, none
   selected:
     github_owned_allowed: true
     verified_allowed: true
@@ -90,12 +92,13 @@ runners:
 
 webhooks:
   allowed_domains:
+    - dcodx.com
     - github.com
   allow_insecure_ssl: false
   allowed_events:
-    - pull
-  mandatory_secret: false
+    - push
+  mandatory_secret: true
 
 admins:
-  - admin1
+  - david3107
   - admin2

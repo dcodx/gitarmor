@@ -92,7 +92,13 @@ npm run start
 
 #### Output
 
-The results will be displayed in the standard output, with reports saved in both JSON and Markdown formats in the `output-report.json` and `output-report.md` files, respectively.
+The results will be displayed in the standard output with enhanced formatting:
+- **Color-coded results**: Green for passed checks, red for failed checks
+- **GitHub documentation links**: Direct links to relevant GitHub security guidelines for each check
+- **Threat model references**: For failed checks, references to threat model documentation
+- **Security framework links**: Links to SLSA.dev threats and MS DevOps Threat Matrix
+
+Reports are also saved in both JSON and Markdown formats in the `output-report.json` and `output-report.md` files, respectively.
 
 <img src="./imgs/markdown-report.png" alt="GitArmor markdown report" />
 

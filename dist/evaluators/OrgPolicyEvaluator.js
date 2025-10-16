@@ -8,6 +8,7 @@ const OrgCustomRolesChecks_1 = require("./organization/OrgCustomRolesChecks");
 const OrgActionsChecks_1 = require("./organization/OrgActionsChecks");
 const Organization_1 = require("../github/Organization");
 const PrivilegesChecks_1 = require("./organization/PrivilegesChecks");
+const outputFormatter_1 = require("../utils/outputFormatter");
 class OrgPolicyEvaluator {
     policy;
     organization;
@@ -57,12 +58,9 @@ class OrgPolicyEvaluator {
         }
     }
     printCheckResults() {
-        logger_1.logger.info("------------------------------------------------------------------------");
-        logger_1.logger.info(`Organization policy results - ${this.organization.name}:`);
-        logger_1.logger.info("------------------------------------------------------------------------");
+        (0, outputFormatter_1.printResultsHeader)(`Organization Policy Results - ${this.organization.name}`);
         this.orgCheckResults.forEach((checkResult) => {
-            const emoji = checkResult.pass === null ? "😐" : checkResult.pass ? "✅" : "❌";
-            logger_1.logger.info(`[${emoji}] Check: ${checkResult.name} - Pass: ${checkResult.pass} \n${JSON.stringify(checkResult.data, null, 3)}`);
+            (0, outputFormatter_1.printEnhancedCheckResult)(checkResult, true);
         });
     }
     getCheckResults() {

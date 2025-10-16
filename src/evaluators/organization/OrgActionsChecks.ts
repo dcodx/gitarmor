@@ -15,32 +15,49 @@ export class OrgActionsChecks {
     const actionsPermissions = await getOrgActionsPermissions(
       this.organization.name,
     );
-
-    const checks = {
-      enabled_repositories: this.checkEnabledRepositories(
-        actionsPermissions.enabled_repositories,
-      ),
-      allowed_actions: this.checkAllowedActions(
-        actionsPermissions.allowed_actions,
-      ),
-      sha_pinning_required: this.checkShaPinningRequired(
-        (actionsPermissions as any).sha_pinning_required,
-      ),
-    };
-
     const name = "Org Actions Checks";
-    const pass = Object.values(checks).every((check) => check === true);
-    const data = {
-      enabled_repositories_github: actionsPermissions.enabled_repositories,
-      enabled_repositories_policy: this.policy.actions.enabled_repositories,
-      allowed_actions_github: actionsPermissions.allowed_actions,
-      allowed_actions_policy: this.policy.actions.allowed_actions,
-      sha_pinning_required_github: (actionsPermissions as any)
-        .sha_pinning_required,
-      sha_pinning_required_policy: this.policy.actions.sha_pinning_required,
-      ...checks,
-    };
+    const passed: string[] = [];
+    const failed: Record<string, any> = {};
+    const info: Record<string, any> = {};
 
+    const policy = this.policy?.actions || {};
+
+    if (policy.enabled_repositories !== undefined) {
+      if (
+        actionsPermissions.enabled_repositories === policy.enabled_repositories
+      ) {
+        passed.push("enabled_repositories");
+      } else {
+        failed.enabled_repositories = {
+          actual: actionsPermissions.enabled_repositories,
+          expected: policy.enabled_repositories,
+        };
+      }
+    }
+
+    if (policy.allowed_actions !== undefined) {
+      if (actionsPermissions.allowed_actions === policy.allowed_actions) {
+        passed.push("allowed_actions");
+      } else {
+        failed.allowed_actions = {
+          actual: actionsPermissions.allowed_actions,
+          expected: policy.allowed_actions,
+        };
+      }
+    }
+
+    if (typeof policy.sha_pinning_required === "boolean") {
+      const actualShaPinning = (actionsPermissions as any)
+        .sha_pinning_required as boolean | undefined;
+      if (actualShaPinning === policy.sha_pinning_required) {
+        passed.push("sha_pinning_required");
+      } else {
+        failed.sha_pinning_required = false;
+      }
+    }
+
+    const pass = Object.keys(failed).length === 0;
+    const data = { passed, failed, info };
     return { name, pass, data };
   }
 
