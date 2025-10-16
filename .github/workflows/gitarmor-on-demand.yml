@@ -11,10 +11,19 @@ on:
         description: 'Organization name'
         required: true
         default: 'dearmory'
+      debug:
+        description: 'Enable debug output (true/false)'
+        required: false
+        default: 'false'
       level:
-        description: 'Level'
+        description: 'Level (repository_only, organization_only, organization_and_repository)'
         required: true
-        default: 'repository'
+        type: choice
+        options:
+          - repository_only
+          - organization_only
+          - organization_and_repository
+        default: 'repository_only'
 
 jobs:
   run-gitarmor:
@@ -40,7 +49,8 @@ jobs:
           repo: ${{ github.event.inputs.repo }}
           org: ${{ github.event.inputs.org }}
           token: ${{ steps.app-token.outputs.token }}
-          level: ${{ github.event.inputs.level }}
+      level: ${{ github.event.inputs.level }}
+      debug: ${{ github.event.inputs.debug }}
           policy-dir: './policies'
 
     - name: Print report to Job summary
