@@ -161,7 +161,7 @@ export class RepoPolicyEvaluator {
       this.repositoryCheckResults.push(admins_checks);
     }
 
-    if (this.policy.protected_tags && this.policy.protected_tags.length > 0) {
+    if (this.policy.tags) {
       const tag_protection = new TagProtectionChecks(
         this.policy,
         this.repository,

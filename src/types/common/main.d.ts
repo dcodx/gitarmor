@@ -61,8 +61,34 @@ interface ProtectedBranch {
   allow_fork_syncing?: boolean;
 }
 
-interface ProtectedTag {
-  name: string;
+interface TagProtection {
+  enforcement: string;
+  target: string;
+  scope: {
+    include: string[];
+    exclude: string[];
+  };
+  operations: {
+    create: string;
+    update: string;
+    delete: string;
+  };
+  naming?: {
+    enabled: boolean;
+    operator: string;
+    pattern: string;
+    negate: boolean;
+  };
+  bypass?: {
+    organization_admins?: string;
+    teams?: Array<{ id: number; mode: string }>;
+    integrations?: Array<{ id: number; mode: string }>;
+    repository_roles?: Array<{ id: number; mode: string }>;
+    deploy_keys?: {
+      allow: boolean;
+      mode: string;
+    };
+  };
 }
 
 interface AdvancedSecurity {
@@ -119,7 +145,7 @@ interface WebHookConfig {
 
 interface RepoPolicy {
   protected_branches: ProtectedBranch[];
-  protected_tags: ProtectedTag[];
+  tags: TagProtection;
   file_exists: string[];
   file_disallow: string[];
   advanced_security: AdvancedSecurity;

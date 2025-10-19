@@ -92,7 +92,7 @@ class RepoPolicyEvaluator {
             logger_1.logger.debug(`Admins checks results: ${JSON.stringify(admins_checks)}`);
             this.repositoryCheckResults.push(admins_checks);
         }
-        if (this.policy.protected_tags && this.policy.protected_tags.length > 0) {
+        if (this.policy.tags) {
             const tag_protection = new TagProtectionChecks_1.TagProtectionChecks(this.policy, this.repository);
             const tag_protection_results = await tag_protection.checkTagProtection();
             logger_1.logger.debug(`Tag protection rule results: ${JSON.stringify(tag_protection_results, null, 2)}`);
