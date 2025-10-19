@@ -47885,6 +47885,7 @@ const WorkflowsChecks_1 = __nccwpck_require__(8336);
 const RunnersChecks_1 = __nccwpck_require__(9863);
 const WebHooksChecks_1 = __nccwpck_require__(1149);
 const AdminsChecks_1 = __nccwpck_require__(2818);
+const TagProtectionChecks_1 = __nccwpck_require__(3739);
 const outputFormatter_1 = __nccwpck_require__(6871);
 // This class is the main Repository evaluator. It evaluates the policy for a given repository.
 class RepoPolicyEvaluator {
@@ -47963,6 +47964,12 @@ class RepoPolicyEvaluator {
             const admins_checks = await new AdminsChecks_1.AdminsChecks(this.policy, this.repository).checkAdmins();
             logger_1.logger.debug(`Admins checks results: ${JSON.stringify(admins_checks)}`);
             this.repositoryCheckResults.push(admins_checks);
+        }
+        if (this.policy.protected_tags && this.policy.protected_tags.length > 0) {
+            const tag_protection = new TagProtectionChecks_1.TagProtectionChecks(this.policy, this.repository);
+            const tag_protection_results = await tag_protection.checkTagProtection();
+            logger_1.logger.debug(`Tag protection rule results: ${JSON.stringify(tag_protection_results, null, 2)}`);
+            this.repositoryCheckResults.push(tag_protection_results);
         }
     }
     // Run webhook checks
@@ -49217,6 +49224,88 @@ exports.RunnersChecks = RunnersChecks;
 
 /***/ }),
 
+/***/ 3739:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TagProtectionChecks = void 0;
+const Repositories_1 = __nccwpck_require__(3354);
+class TagProtectionChecks {
+    policy;
+    repository;
+    constructor(policy, repository) {
+        this.policy = policy;
+        this.repository = repository;
+    }
+    async checkTagProtection() {
+        const rulesets = await (0, Repositories_1.getRepoRulesets)(this.repository.owner, this.repository.name);
+        // Filter to get only tag rulesets that are active
+        const tagRulesets = rulesets.filter((ruleset) => ruleset.target === "tag" && ruleset.enforcement === "active");
+        const policyTags = this.policy.protected_tags || [];
+        const protectedTagPatterns = tagRulesets
+            .map((ruleset) => {
+            // Extract tag patterns from conditions
+            if (ruleset.conditions?.ref_name?.include) {
+                return ruleset.conditions.ref_name.include;
+            }
+            return [];
+        })
+            .flat();
+        // Check which policy tags are protected
+        const passedTags = [];
+        const failedTags = [];
+        for (const policyTag of policyTags) {
+            const isProtected = this.isTagProtected(policyTag.name, protectedTagPatterns);
+            if (isProtected) {
+                passedTags.push(policyTag.name);
+            }
+            else {
+                failedTags.push(policyTag.name);
+            }
+        }
+        return this.createResult(passedTags, failedTags, protectedTagPatterns);
+    }
+    isTagProtected(tagName, protectedPatterns) {
+        // Check if tag name matches any protected pattern
+        for (const pattern of protectedPatterns) {
+            if (pattern === "~ALL") {
+                return true;
+            }
+            // Convert GitHub pattern to regex
+            const regexPattern = pattern
+                .replace(/\*/g, ".*")
+                .replace(/\?/g, ".")
+                .replace(/\[/g, "\\[")
+                .replace(/\]/g, "\\]");
+            const regex = new RegExp(`^${regexPattern}$`);
+            if (regex.test(tagName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    createResult(passed, failed, protectedPatterns) {
+        const name = "Tag Protection";
+        const pass = failed.length === 0;
+        const data = {
+            passed,
+            failed: {
+                not_protected: failed,
+            },
+            info: {
+                protected_patterns: protectedPatterns,
+            },
+        };
+        return { name, pass, data };
+    }
+}
+exports.TagProtectionChecks = TagProtectionChecks;
+
+
+/***/ }),
+
 /***/ 1149:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -49656,7 +49745,7 @@ exports.getCustomRolesForOrg = getCustomRolesForOrg;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getRepositoryCodeScanningAnalysis = exports.getRepoDependabotSecurityUpdates = exports.getRepoDependabotAlerts = exports.getRepoFile = exports.getRepoBranchProtection = exports.getRepoProtectedBranches = exports.getRepoBranch = exports.getRepoCollaborators = exports.getRepoPullRequests = exports.getRepository = exports.getRepositoriesForTeamAsAdmin = void 0;
+exports.getRepoRulesets = exports.getRepositoryCodeScanningAnalysis = exports.getRepoDependabotSecurityUpdates = exports.getRepoDependabotAlerts = exports.getRepoFile = exports.getRepoBranchProtection = exports.getRepoProtectedBranches = exports.getRepoBranch = exports.getRepoCollaborators = exports.getRepoPullRequests = exports.getRepository = exports.getRepositoriesForTeamAsAdmin = void 0;
 const GitArmorKit_1 = __nccwpck_require__(2009);
 const logger_1 = __nccwpck_require__(8836);
 const getRepositoriesForTeamAsAdmin = async (org, teamSlug) => {
@@ -49807,6 +49896,27 @@ const getRepositoryCodeScanningAnalysis = async (owner, repo) => {
     }
 };
 exports.getRepositoryCodeScanningAnalysis = getRepositoryCodeScanningAnalysis;
+// get repository rulesets for tag protection
+const getRepoRulesets = async (owner, repo) => {
+    const octokit = new GitArmorKit_1.GitArmorKit();
+    try {
+        const response = await octokit.rest.repos.getRepoRulesets({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        logger_1.logger.debug(`Repository rulesets fetching error: ${error.message}`);
+        if (error.status === 404) {
+            return [];
+        }
+        else {
+            throw error;
+        }
+    }
+};
+exports.getRepoRulesets = getRepoRulesets;
 
 
 /***/ }),

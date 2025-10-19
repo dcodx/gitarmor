@@ -34,6 +34,12 @@ protected_branches:
     required_pull_request_reviews: true
     allow_fork_syncing: false
 
+# define the protected tags for the repository
+protected_tags:
+  - name: v*
+  - name: release-*
+  - name: prod-*
+
      
 file_exists:
   - .github/CODEOWNERS

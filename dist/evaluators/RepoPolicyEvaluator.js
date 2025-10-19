@@ -12,6 +12,7 @@ const WorkflowsChecks_1 = require("./repository/WorkflowsChecks");
 const RunnersChecks_1 = require("./repository/RunnersChecks");
 const WebHooksChecks_1 = require("./repository/WebHooksChecks");
 const AdminsChecks_1 = require("./repository/AdminsChecks");
+const TagProtectionChecks_1 = require("./repository/TagProtectionChecks");
 const outputFormatter_1 = require("../utils/outputFormatter");
 // This class is the main Repository evaluator. It evaluates the policy for a given repository.
 class RepoPolicyEvaluator {
@@ -90,6 +91,12 @@ class RepoPolicyEvaluator {
             const admins_checks = await new AdminsChecks_1.AdminsChecks(this.policy, this.repository).checkAdmins();
             logger_1.logger.debug(`Admins checks results: ${JSON.stringify(admins_checks)}`);
             this.repositoryCheckResults.push(admins_checks);
+        }
+        if (this.policy.protected_tags && this.policy.protected_tags.length > 0) {
+            const tag_protection = new TagProtectionChecks_1.TagProtectionChecks(this.policy, this.repository);
+            const tag_protection_results = await tag_protection.checkTagProtection();
+            logger_1.logger.debug(`Tag protection rule results: ${JSON.stringify(tag_protection_results, null, 2)}`);
+            this.repositoryCheckResults.push(tag_protection_results);
         }
     }
     // Run webhook checks

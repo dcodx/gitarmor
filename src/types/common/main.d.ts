@@ -61,6 +61,10 @@ interface ProtectedBranch {
   allow_fork_syncing?: boolean;
 }
 
+interface ProtectedTag {
+  name: string;
+}
+
 interface AdvancedSecurity {
   ghas: boolean;
   secret_scanning: boolean;
@@ -115,6 +119,7 @@ interface WebHookConfig {
 
 interface RepoPolicy {
   protected_branches: ProtectedBranch[];
+  protected_tags: ProtectedTag[];
   file_exists: string[];
   file_disallow: string[];
   advanced_security: AdvancedSecurity;
