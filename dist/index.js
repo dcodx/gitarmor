@@ -49310,19 +49310,25 @@ class TagProtectionChecks {
         const excludePatterns = conditions?.ref_name?.exclude || [];
         const expectedInclude = policyScope.include || [];
         const expectedExclude = policyScope.exclude || [];
+        // Normalize patterns - GitHub API returns patterns with refs/tags/ prefix
+        const normalizePattern = (pattern) => {
+            return pattern.replace(/^refs\/tags\//, "");
+        };
+        const normalizedIncludePatterns = includePatterns.map(normalizePattern);
+        const normalizedExcludePatterns = excludePatterns.map(normalizePattern);
         // Check if all expected include patterns are present
-        const missingIncludes = expectedInclude.filter((pattern) => !includePatterns.includes(pattern));
+        const missingIncludes = expectedInclude.filter((pattern) => !normalizedIncludePatterns.includes(pattern));
         // Check if all expected exclude patterns are present
-        const missingExcludes = expectedExclude.filter((pattern) => !excludePatterns.includes(pattern));
+        const missingExcludes = expectedExclude.filter((pattern) => !normalizedExcludePatterns.includes(pattern));
         const passed = missingIncludes.length === 0 && missingExcludes.length === 0;
         return {
             passed,
             details: {
                 expected_include: expectedInclude,
-                actual_include: includePatterns,
+                actual_include: normalizedIncludePatterns,
                 missing_includes: missingIncludes,
                 expected_exclude: expectedExclude,
-                actual_exclude: excludePatterns,
+                actual_exclude: normalizedExcludePatterns,
                 missing_excludes: missingExcludes,
             },
         };
@@ -49363,14 +49369,45 @@ class TagProtectionChecks {
         };
     }
     checkNaming(policyNaming, ruleset) {
-        // GitHub rulesets don't have a direct naming constraint rule
-        // This would need to be implemented based on specific ruleset rules
-        // For now, we'll return a placeholder
+        const rules = ruleset.rules || [];
+        // Find tag_name_pattern rule
+        const tagNamePatternRule = rules.find((rule) => rule.type === "tag_name_pattern");
+        if (!tagNamePatternRule) {
+            return {
+                passed: false,
+                details: {
+                    message: "No tag_name_pattern rule found in ruleset",
+                    expected: policyNaming,
+                    actual: null,
+                },
+            };
+        }
+        const params = tagNamePatternRule.parameters || {};
+        // Check if operator matches
+        const operatorMatches = params.operator === policyNaming.operator;
+        // Check if pattern matches
+        const patternMatches = params.pattern === policyNaming.pattern;
+        // Check if negate matches
+        const negateMatches = params.negate === policyNaming.negate;
+        const passed = operatorMatches && patternMatches && negateMatches;
         return {
-            passed: true,
+            passed,
             details: {
-                message: "Naming constraint checking not fully implemented - requires custom rule analysis",
-                policy: policyNaming,
+                expected: {
+                    operator: policyNaming.operator,
+                    pattern: policyNaming.pattern,
+                    negate: policyNaming.negate,
+                },
+                actual: {
+                    operator: params.operator,
+                    pattern: params.pattern,
+                    negate: params.negate,
+                },
+                checks: {
+                    operator: operatorMatches,
+                    pattern: patternMatches,
+                    negate: negateMatches,
+                },
             },
         };
     }
