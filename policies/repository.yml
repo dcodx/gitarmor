@@ -34,6 +34,43 @@ protected_branches:
     required_pull_request_reviews: true
     allow_fork_syncing: false
 
+# define the protected tags for the repository
+tags:
+  enforcement: active           # disabled | active | evaluate
+  target: tag                   # fixed for tag rules so we can also not specify it here but fix it in code
+
+  scope:
+    include:
+      - "v*"                    # e.g., protect all version tags
+      # - "~ALL"                # special token: all tags
+    exclude: []                 # patterns to exclude, e.g., ["v0.*"]
+
+  operations:                   # who can perform actions on matching tags
+    create: restricted          # allowed | restricted (restricted = bypass-only)
+    update: restricted
+    delete: restricted
+
+  naming:                       # optional: constrain tag names
+    enabled: true
+    operator: regex             # starts_with | ends_with | contains | regex
+    pattern: "^v\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"
+    negate: false               # true = pattern disallowed
+
+  bypass:                       # actors allowed to bypass protections
+    organization_admins: always # always | exempt
+    teams:
+      - id: 1234567             # example team id
+        mode: always            # always | exempt
+    integrations:
+      - id: 987654              # GitHub App id
+        mode: always
+    repository_roles:
+      - id: 3                   # e.g., Maintainer role id
+        mode: always
+    deploy_keys:
+      allow: true               # DeployKeys can bypass when true
+      mode: always
+
      
 file_exists:
   - .github/CODEOWNERS

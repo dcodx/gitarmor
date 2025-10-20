@@ -10,6 +10,7 @@ import { WorkflowsChecks } from "./repository/WorkflowsChecks";
 import { RunnersChecks } from "./repository/RunnersChecks";
 import { WebHooksChecks } from "./repository/WebHooksChecks";
 import { AdminsChecks } from "./repository/AdminsChecks";
+import { TagProtectionChecks } from "./repository/TagProtectionChecks";
 import {
   printEnhancedCheckResult,
   printResultsHeader,
@@ -158,6 +159,22 @@ export class RepoPolicyEvaluator {
       ).checkAdmins();
       logger.debug(`Admins checks results: ${JSON.stringify(admins_checks)}`);
       this.repositoryCheckResults.push(admins_checks);
+    }
+
+    if (this.policy.tags) {
+      const tag_protection = new TagProtectionChecks(
+        this.policy,
+        this.repository,
+      );
+      const tag_protection_results = await tag_protection.checkTagProtection();
+      logger.debug(
+        `Tag protection rule results: ${JSON.stringify(
+          tag_protection_results,
+          null,
+          2,
+        )}`,
+      );
+      this.repositoryCheckResults.push(tag_protection_results);
     }
   }
 

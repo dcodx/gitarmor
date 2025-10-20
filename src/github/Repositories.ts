@@ -223,3 +223,29 @@ export const getRepositoryCodeScanningAnalysis = async (
     }
   }
 };
+
+// get repository rulesets for tag protection
+export const getRepoRulesets = async (
+  owner: string,
+  repo: string,
+): Promise<
+  Endpoints["GET /repos/{owner}/{repo}/rulesets"]["response"]["data"]
+> => {
+  const octokit = new GitArmorKit();
+  try {
+    const response: Endpoints["GET /repos/{owner}/{repo}/rulesets"]["response"] =
+      await octokit.rest.repos.getRepoRulesets({
+        owner: owner,
+        repo: repo,
+      });
+
+    return response.data;
+  } catch (error) {
+    logger.debug(`Repository rulesets fetching error: ${error.message}`);
+    if (error.status === 404) {
+      return [];
+    } else {
+      throw error;
+    }
+  }
+};
