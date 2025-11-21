@@ -76,7 +76,7 @@ tags:
     include:
       - "v*"                    # e.g., protect all version tags
       # - "~ALL"                # special token: all tags
-    exclude: []                 # patterns to exclude, e.g., ["v0.*"]
+    exclude: []                 # patterns to exclude, e.g., ["v*-beta*", "v*-alpha*"]
 
   operations:                   # who can perform actions on matching tags
     create: restricted          # allowed | restricted (restricted = bypass-only)
@@ -116,7 +116,7 @@ tags:
 
 - `scope`: defines which tags are protected by the ruleset.
   - `include`: a list of tag patterns to protect. Supports wildcards (e.g., `v*` for all version tags) and the special token `~ALL` to protect all tags.
-  - `exclude`: a list of tag patterns to exclude from protection (e.g., `["v0.*"]` to exclude pre-release tags).
+  - `exclude`: a list of tag patterns to exclude from protection (e.g., `["v*-beta*", "v*-alpha*"]` to exclude pre-release tags).
 
 - `operations`: defines who can perform operations on protected tags.
   - `create`: controls tag creation. Set to `restricted` to allow only bypass actors to create tags, or `allowed` for unrestricted creation.
