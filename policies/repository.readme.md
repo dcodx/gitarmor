@@ -61,6 +61,98 @@ protected_branches:
 - `allow_fork_syncing`: if set to `true`, the branch can be synced with the upstream repository.
 
 
+## Tag Protection
+
+Tag protection is a way to protect important version tags and releases from unauthorized modifications or deletions. The policy checks whether the tag protection settings specified are applied to the repository using GitHub repository rulesets.
+
+[GitHub Repository Rulesets for Tags](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets)
+
+```yml
+tags:
+  enforcement: active           # disabled | active | evaluate
+  target: tag                   # fixed for tag rules so we can also not specify it here but fix it in code
+
+  scope:
+    include:
+      - "v*"                    # e.g., protect all version tags
+      # - "~ALL"                # special token: all tags
+    exclude: []                 # patterns to exclude, e.g., ["v0.*"]
+
+  operations:                   # who can perform actions on matching tags
+    create: restricted          # allowed | restricted (restricted = bypass-only)
+    update: restricted
+    delete: restricted
+
+  naming:                       # optional: constrain tag names
+    enabled: true
+    operator: regex             # starts_with | ends_with | contains | regex
+    pattern: "^v\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"
+    negate: false               # true = pattern disallowed
+
+  bypass:                       # actors allowed to bypass protections
+    organization_admins: always # always | exempt
+    teams:
+      - id: 1234567             # example team id
+        mode: always            # always | exempt
+    integrations:
+      - id: 987654              # GitHub App id
+        mode: always
+    repository_roles:
+      - id: 3                   # e.g., Maintainer role id
+        mode: always
+    deploy_keys:
+      allow: true               # DeployKeys can bypass when true
+      mode: always
+```
+
+`tags` configuration has the following settings:
+
+- `enforcement` (**mandatory**): the enforcement level for the tag ruleset.
+  - `disabled`: the ruleset is disabled and not enforced.
+  - `active`: the ruleset is actively enforced and will block non-compliant operations.
+  - `evaluate`: the ruleset runs in evaluation mode (logs violations without blocking).
+
+- `target` (**optional**): should always be `tag` for tag rulesets. This is typically fixed in code and doesn't need to be specified.
+
+- `scope`: defines which tags are protected by the ruleset.
+  - `include`: a list of tag patterns to protect. Supports wildcards (e.g., `v*` for all version tags) and the special token `~ALL` to protect all tags.
+  - `exclude`: a list of tag patterns to exclude from protection (e.g., `["v0.*"]` to exclude pre-release tags).
+
+- `operations`: defines who can perform operations on protected tags.
+  - `create`: controls tag creation. Set to `restricted` to allow only bypass actors to create tags, or `allowed` for unrestricted creation.
+  - `update`: controls tag updates. Set to `restricted` to allow only bypass actors to update tags, or `allowed` for unrestricted updates.
+  - `delete`: controls tag deletion. Set to `restricted` to allow only bypass actors to delete tags, or `allowed` for unrestricted deletion.
+
+- `naming` (**optional**): constrains tag names using pattern matching.
+  - `enabled`: set to `true` to enable naming constraints.
+  - `operator`: the pattern matching operator to use.
+    - `starts_with`: tag name must start with the pattern.
+    - `ends_with`: tag name must end with the pattern.
+    - `contains`: tag name must contain the pattern.
+    - `regex`: tag name must match the regular expression pattern.
+  - `pattern`: the pattern or regular expression to match against tag names. For semantic versioning, use: `"^v\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"`.
+  - `negate`: if set to `true`, the pattern is disallowed (inverts the match).
+
+- `bypass` (**optional**): defines actors who can bypass tag protection rules.
+  - `organization_admins`: bypass mode for organization administrators.
+    - `always`: organization admins can always bypass the rules.
+    - `exempt`: organization admins are not exempt and must follow the rules.
+  - `teams`: a list of teams that can bypass the rules.
+    - `id`: the team ID (numeric).
+    - `mode`: `always` (can bypass) or `exempt` (cannot bypass).
+  - `integrations`: a list of GitHub Apps that can bypass the rules.
+    - `id`: the GitHub App ID (numeric).
+    - `mode`: `always` (can bypass) or `exempt` (cannot bypass).
+  - `repository_roles`: a list of repository roles that can bypass the rules.
+    - `id`: the repository role ID (e.g., 3 for Maintainer).
+    - `mode`: `always` (can bypass) or `exempt` (cannot bypass).
+  - `deploy_keys`: configuration for deploy keys.
+    - `allow`: set to `true` to allow deploy keys to bypass protections, `false` to deny.
+    - `mode`: `always` (can bypass) or `exempt` (cannot bypass).
+
+**Best Practice**: Use tag protection to secure release tags, enforce semantic versioning, and prevent accidental deletion or modification of important version markers.
+
+
 ## File Disallow
 
 The `file_disallow` policy checks if sensitive files that should not be present in the repository are found. This helps prevent accidental commits of credentials, API keys, and other sensitive information.
