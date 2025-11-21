@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRepositoryCodeScanningAnalysis = exports.getRepoDependabotSecurityUpdates = exports.getRepoDependabotAlerts = exports.getRepoFile = exports.getRepoBranchProtection = exports.getRepoProtectedBranches = exports.getRepoBranch = exports.getRepoCollaborators = exports.getRepoPullRequests = exports.getRepository = exports.getRepositoriesForTeamAsAdmin = void 0;
+exports.getRepoRulesets = exports.getRepositoryCodeScanningAnalysis = exports.getRepoDependabotSecurityUpdates = exports.getRepoDependabotAlerts = exports.getRepoFile = exports.getRepoBranchProtection = exports.getRepoProtectedBranches = exports.getRepoBranch = exports.getRepoCollaborators = exports.getRepoPullRequests = exports.getRepository = exports.getRepositoriesForTeamAsAdmin = void 0;
 const GitArmorKit_1 = require("./GitArmorKit");
 const logger_1 = require("../utils/logger");
 const getRepositoriesForTeamAsAdmin = async (org, teamSlug) => {
@@ -151,3 +151,24 @@ const getRepositoryCodeScanningAnalysis = async (owner, repo) => {
     }
 };
 exports.getRepositoryCodeScanningAnalysis = getRepositoryCodeScanningAnalysis;
+// get repository rulesets for tag protection
+const getRepoRulesets = async (owner, repo) => {
+    const octokit = new GitArmorKit_1.GitArmorKit();
+    try {
+        const response = await octokit.rest.repos.getRepoRulesets({
+            owner: owner,
+            repo: repo,
+        });
+        return response.data;
+    }
+    catch (error) {
+        logger_1.logger.debug(`Repository rulesets fetching error: ${error.message}`);
+        if (error.status === 404) {
+            return [];
+        }
+        else {
+            throw error;
+        }
+    }
+};
+exports.getRepoRulesets = getRepoRulesets;
