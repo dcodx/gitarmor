@@ -160,7 +160,9 @@ tags:
   scope:
     include:
       - "v*"
-    exclude: []
+    exclude:
+      - "v*-rc*"
+      - "v*-beta*"
   operations:
     create: restricted
     update: restricted
