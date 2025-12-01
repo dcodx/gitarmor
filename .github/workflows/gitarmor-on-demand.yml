@@ -46,12 +46,12 @@ jobs:
       #env:
       #   DEBUG: true
       with:
-          repo: ${{ github.event.inputs.repo }}
-          org: ${{ github.event.inputs.org }}
-          token: ${{ steps.app-token.outputs.token }}
-      level: ${{ github.event.inputs.level }}
-      debug: ${{ github.event.inputs.debug }}
-          policy-dir: './policies'
+        repo: ${{ github.event.inputs.repo }}
+        org: ${{ github.event.inputs.org }}
+        token: ${{ steps.app-token.outputs.token }}
+        level: ${{ github.event.inputs.level }}
+        debug: ${{ github.event.inputs.debug }}
+        policy-dir: "./policies"
 
     - name: Print report to Job summary
       run: |
