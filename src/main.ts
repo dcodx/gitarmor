@@ -12,7 +12,7 @@ const run = async (): Promise<void> => {
   logger.info(`
 
              GitArmor                                                                                       
-     by dcodx.com - version 1.0
+     by dcodx.com - version 1.2
               
     `);
 
