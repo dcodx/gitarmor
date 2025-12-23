@@ -141,6 +141,55 @@ webhooks:
   - Endpoint compromise
 
 
+### Unauthorized modification or deletion of release tags
+
+A malicious actor could modify or delete release tags in the repository, potentially compromising the integrity of versioned releases, breaking deployments, or enabling supply chain attacks by manipulating which code versions are considered official releases.
+
+#### Security controls
+- Restrict who can create, update, or delete tags using repository rulesets
+- Enforce naming conventions for version tags to ensure consistency
+- Define bypass actors who are authorized to manage protected tags
+- Use evaluation mode to test tag protection rules before enforcement
+- Limit tag operations to specific teams or roles
+
+#### Gitarmor policy configuration
+```yml
+tags:
+  enforcement: active
+  target: tag
+  scope:
+    include:
+      - "v*"
+    exclude:
+      - "v*-rc*"
+      - "v*-beta*"
+  operations:
+    create: restricted
+    update: restricted
+    delete: restricted
+  naming:
+    enabled: true
+    operator: regex
+    pattern: "^v\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"
+    negate: false
+  bypass:
+    organization_admins: always
+    repository_roles:
+      - id: 3
+        mode: always
+```
+
+#### SLSA.dev threats
+- [(A) Submit unauthorized change](https://slsa.dev/spec/v1.0/threats-overview) - Unauthorized tag modifications can point to malicious code
+- [(F) Upload modified package](https://slsa.dev/spec/v1.0/threats) - Manipulated tags can cause incorrect artifacts to be published
+
+#### MS DevOps threat matrix
+- [3. Persistence](https://www.microsoft.com/en-us/security/blog/2023/04/06/devops-threat-matrix/)
+  - Changes in repository (tag manipulation)
+- [4. Privilege escalation](https://www.microsoft.com/en-us/security/blog/2023/04/06/devops-threat-matrix/)
+  - Unauthorized release creation or modification
+
+
 ### Sensitive files committed to the repository
 
 Developers may accidentally commit sensitive files containing credentials, API keys, passwords, or other confidential information to the repository. Files like `.env`, configuration files, or credential files can expose the application and infrastructure to unauthorized access.
